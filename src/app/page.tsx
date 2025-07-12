@@ -32,7 +32,7 @@ const projects = [
     description:
       "Um jogo de palavras viciante que testa seu vocabulário e raciocínio rápido em um formato divertido.",
     logoUrl: "/wordrope.png",
-    link: "#", // Link para a App Store / Play Store
+    link: "https://play.google.com/store/apps/details?id=com.codevibestudio.wordrope", // Link para a App Store / Play Store
   },
   {
     name: "MeuTreino",
@@ -41,7 +41,7 @@ const projects = [
     description:
       "Aplicativo para academias e personal trainers, facilitando a criação e acompanhamento de treinos.",
     logoUrl: "/icone_meutreino.png",
-    link: "#", // Link para a App Store / Play Store
+    link: "https://meutreino-rose.vercel.app/dashboard", // Link para a App Store / Play Store
   },
 ];
 
