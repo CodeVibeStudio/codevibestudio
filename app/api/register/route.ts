@@ -1,5 +1,6 @@
 // src/app/api/register/route.ts
 import { NextResponse } from "next/server";
+import { STRIPE_PRICES } from "@/lib/stripe-config";
 import { supabaseAdmin } from "@/lib/supabase";
 import Stripe from "stripe";
 
@@ -9,6 +10,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(req: Request) {
   const { companyName, adminEmail, password, chosenPriceId } = await req.json();
+
+  // Validar se o priceId é válido
+  const validPriceIds = Object.values(STRIPE_PRICES).flatMap((product) =>
+    Object.values(product)
+  );
+  if (!validPriceIds.includes(chosenPriceId)) {
+    return NextResponse.json({ error: "Plano inválido" }, { status: 400 });
+  }
 
   // 1. Cria empresa
   const { data: empresa, error: empErr } = await supabaseAdmin
