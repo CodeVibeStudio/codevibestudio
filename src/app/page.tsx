@@ -5,38 +5,43 @@ import Image from "next/image";
 import { Mail, MessageCircle, Instagram } from "lucide-react";
 
 // --- DADOS DOS PROJETOS ---
+// Adicionamos o campo 'type' para categorizar cada projeto.
 const projects = [
   {
     name: "RescueNow",
+    type: "saas",
     slogan: "O Controle na Palma da Sua Mão",
     description:
       "Sistema de gestão empresarial completo para simplificar suas operações, do financeiro aos clientes.",
-    logoUrl: "/rescuenow.png", // O caminho começa com '/' para indicar a pasta public
+    logoUrl: "/rescuenow.jpg",
     link: "/produtos/rescuenow",
   },
   {
+    name: "VetCare+",
+    type: "saas",
+    slogan: "Cuidando de Quem Sempre Cuida de Você",
+    description:
+      "Software de gestão para clínicas veterinárias, simplificando agendamentos, prontuários e faturamento.",
+    logoUrl: "/logovetecare+.png",
+    link: "#", // Crie a página de produto para o VetCare+
+  },
+  {
     name: "WordRope",
+    type: "app",
     slogan: "Desafie sua Mente, Palavra por Palavra",
     description:
       "Um jogo de palavras viciante que testa seu vocabulário e raciocínio rápido em um formato divertido.",
     logoUrl: "/wordrope.png",
-    link: "#",
-  },
-  {
-    name: "VetCare+",
-    slogan: "Cuidando de Quem Sempre Cuida de Você",
-    description:
-      "Software de gestão para clínicas veterinárias, simplificando agendamentos, prontuários e faturamento.",
-    logoUrl: "/logovetecare+.png", // Placeholder
-    link: "#",
+    link: "#", // Link para a App Store / Play Store
   },
   {
     name: "MeuTreino",
+    type: "app",
     slogan: "Sua Jornada Fitness, Personalizada",
     description:
       "Aplicativo para academias e personal trainers, facilitando a criação e acompanhamento de treinos.",
-    logoUrl: "/icone_meutreino.png", // Placeholder
-    link: "#",
+    logoUrl: "/icone_meutreino.png",
+    link: "#", // Link para a App Store / Play Store
   },
 ];
 
@@ -47,7 +52,6 @@ function Header() {
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
         <Link href="/">
-          {/* O caminho da imagem agora está correto */}
           <Image
             src="/codevibestudiologo.png"
             alt="Logo CodeVibe Studio"
@@ -69,12 +73,12 @@ function Header() {
           >
             Sobre Nós
           </Link>
-          {/* CORREÇÃO: Usando as classes de cor simplificadas */}
+          {/* MUDANÇA: O botão principal agora é mais abrangente */}
           <Link
-            href="/produtos/rescuenow"
+            href="#projetos"
             className="bg-secundaria text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors"
           >
-            Conheça o RescueNow
+            Nossas Soluções
           </Link>
         </div>
       </nav>
@@ -105,8 +109,19 @@ function HeroSection() {
 }
 
 function ProjectCard({ project }: { project: (typeof projects)[0] }) {
+  const isSaaS = project.type === "saas";
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 flex flex-col">
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 flex flex-col relative">
+      {/* MUDANÇA: Tag visual para identificar o tipo de produto */}
+      <div className="absolute top-4 right-4 z-10">
+        <span
+          className={`px-3 py-1 text-xs font-bold text-white rounded-full ${
+            isSaaS ? "bg-primaria" : "bg-green-600"
+          }`}
+        >
+          {isSaaS ? "SaaS" : "App"}
+        </span>
+      </div>
       <div className="p-6">
         <Image
           src={project.logoUrl}
@@ -126,7 +141,7 @@ function ProjectCard({ project }: { project: (typeof projects)[0] }) {
           href={project.link}
           className="font-bold text-secundaria hover:text-orange-600 transition-colors"
         >
-          Saber mais &rarr;
+          {isSaaS ? "Ver Planos" : "Baixar App"} &rarr;
         </Link>
       </div>
     </div>
@@ -134,19 +149,45 @@ function ProjectCard({ project }: { project: (typeof projects)[0] }) {
 }
 
 function ProjectsSection() {
+  // MUDANÇA: Filtramos os projetos por tipo para exibi-los em seções separadas
+  const saasProjects = projects.filter((p) => p.type === "saas");
+  const appProjects = projects.filter((p) => p.type === "app");
+
   return (
     <section id="projetos" className="py-20 bg-gray-50">
       <div className="container mx-auto px-6">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-texto">Nossos Projetos</h2>
-          <p className="text-lg text-texto-claro mt-2">
-            Um ecossistema de soluções para diferentes necessidades.
-          </p>
+        {/* Seção de SaaS */}
+        <div className="mb-16">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-texto">
+              Softwares para Empresas (SaaS)
+            </h2>
+            <p className="text-lg text-texto-claro mt-2">
+              Soluções robustas para otimizar a gestão do seu negócio.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {saasProjects.map((project) => (
+              <ProjectCard key={project.name} project={project} />
+            ))}
+          </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {projects.map((project) => (
-            <ProjectCard key={project.name} project={project} />
-          ))}
+
+        {/* Seção de Apps */}
+        <div>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-texto">
+              Aplicativos e Jogos
+            </h2>
+            <p className="text-lg text-texto-claro mt-2">
+              Experiências mobile criativas e envolventes.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {appProjects.map((project) => (
+              <ProjectCard key={project.name} project={project} />
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -187,7 +228,7 @@ function Footer() {
   ];
 
   return (
-    <footer className="bg-texto text-white py-12">
+    <footer id="contato" className="bg-texto text-white py-12">
       <div className="container mx-auto px-6 text-center">
         <Image
           src="/codevibestudiologo.png"
