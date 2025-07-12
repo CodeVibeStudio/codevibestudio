@@ -1,16 +1,78 @@
-import Link from 'next/link';
+import Link from "next/link";
+import Image from "next/image";
+import { Mail, MessageCircle, Instagram } from "lucide-react";
 
-// Componente para o Header/Navbar
+// --- DADOS DOS PROJETOS ---
+// Manter os dados aqui facilita a adição de novos projetos no futuro.
+const projects = [
+  {
+    name: "RescueNow",
+    slogan: "O Controle na Palma da Sua Mão",
+    description:
+      "Sistema de gestão empresarial completo para simplificar suas operações, do financeiro aos clientes.",
+    logoUrl: "/rescuenow.jpg", // Caminho a partir da pasta /public
+    link: "/produtos/rescuenow",
+  },
+  {
+    name: "WordRope",
+    slogan: "Desafie sua Mente, Palavra por Palavra",
+    description:
+      "Um jogo de palavras viciante que testa seu vocabulário e raciocínio rápido em um formato divertido.",
+    logoUrl: "/wordrope.png",
+    link: "#", // Coloque o link quando a página do produto estiver pronta
+  },
+  {
+    name: "VetCare+",
+    slogan: "Cuidando de Quem Sempre Cuida de Você",
+    description:
+      "Software de gestão para clínicas veterinárias, simplificando agendamentos, prontuários e faturamento.",
+    logoUrl: "/placeholder-logo.svg", // Use um placeholder por enquanto
+    link: "#",
+  },
+  {
+    name: "MeuTreino",
+    slogan: "Sua Jornada Fitness, Personalizada",
+    description:
+      "Aplicativo para academias e personal trainers, facilitando a criação e acompanhamento de treinos.",
+    logoUrl: "/placeholder-logo.svg",
+    link: "#",
+  },
+];
+
+// --- COMPONENTES DA PÁGINA ---
+
 function Header() {
   return (
-    <header className="bg-white shadow-sm">
-      <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-primaria">CodeVibe Studio</h1>
-        <div>
-          <Link href="#produto" className="text-texto hover:text-primaria mr-4">Produto</Link>
-          <Link href="#sobre" className="text-texto hover:text-primaria mr-4">Sobre Nós</Link>
-          <Link href="/signup" className="bg-primaria text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-            Começar Agora
+    <header className="bg-white shadow-sm sticky top-0 z-50">
+      <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
+        <Link href="/">
+          {/* Usando o componente Image do Next.js para otimização */}
+          <Image
+            src="/codevibestudio.jpg"
+            alt="Logo CodeVibe Studio"
+            width={50}
+            height={50}
+            className="rounded-md"
+          />
+        </Link>
+        <div className="flex items-center space-x-6">
+          <Link
+            href="#projetos"
+            className="text-texto-claro hover:text-secundaria-DEFAULT transition-colors"
+          >
+            Projetos
+          </Link>
+          <Link
+            href="#sobre"
+            className="text-texto-claro hover:text-secundaria-DEFAULT transition-colors"
+          >
+            Sobre Nós
+          </Link>
+          <Link
+            href="/produtos/rescuenow"
+            className="bg-secundaria-DEFAULT text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors"
+          >
+            Conheça o RescueNow
           </Link>
         </div>
       </nav>
@@ -18,82 +80,157 @@ function Header() {
   );
 }
 
-// Componente para a seção Hero
 function HeroSection() {
   return (
-    <section className="bg-fundo py-20">
+    <section className="bg-fundo py-24">
       <div className="container mx-auto px-6 text-center">
-        <h2 className="text-5xl font-extrabold text-texto mb-4">Soluções Digitais Inovadoras</h2>
-        <p className="text-xl text-secundaria mb-8">Criamos tecnologia que impulsiona o crescimento e a eficiência do seu negócio.</p>
-        <Link href="/produtos/rescuenow" className="bg-primaria text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-700 transition-colors">
-          Conheça o RescueNow
+        <h2 className="text-5xl md:text-6xl font-extrabold text-texto mb-4">
+          Soluções Digitais Inovadoras
+        </h2>
+        <p className="text-xl text-texto-claro mb-8 max-w-3xl mx-auto">
+          Transformamos ideias em realidade com tecnologia de ponta, design
+          centrado no usuário e uma paixão por resolver problemas.
+        </p>
+        <Link
+          href="#projetos"
+          className="bg-primaria-DEFAULT text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-800 transition-colors"
+        >
+          Explore Nossos Projetos
         </Link>
       </div>
     </section>
   );
 }
 
-// Componente para a seção do Produto
-function ProductSection() {
+function ProjectCard({ project }: { project: (typeof projects)[0] }) {
   return (
-    <section id="produto" className="py-20">
-      <div className="container mx-auto px-6 flex flex-col md:flex-row items-center">
-        <div className="md:w-1/2 mb-8 md:mb-0">
-          {/* Placeholder para uma imagem ou ilustração do produto */}
-          <div className="bg-gray-200 w-full h-80 rounded-lg flex items-center justify-center">
-            <span className="text-secundaria">Imagem do Produto</span>
-          </div>
-        </div>
-        <div className="md:w-1/2 md:pl-12">
-          <h3 className="text-4xl font-bold text-texto mb-3">RescueNow</h3>
-          <p className="text-2xl text-primaria font-semibold mb-6">"O Controle na Palma da Sua Mão"</p>
-          <p className="text-lg text-secundaria mb-6">
-            RescueNow é um sistema de gestão empresarial completo, projetado para simplificar suas operações,
-            desde o controle financeiro até o gerenciamento de clientes. Tudo em uma plataforma intuitiva e poderosa.
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 flex flex-col">
+      <div className="p-6">
+        <Image
+          src={project.logoUrl}
+          alt={`Logo ${project.name}`}
+          width={60}
+          height={60}
+          className="rounded-lg mb-4"
+          onError={(e) => {
+            e.currentTarget.src =
+              "https://placehold.co/60x60/f8fafc/1e293b?text=Logo";
+          }}
+        />
+        <h3 className="text-2xl font-bold text-texto">{project.name}</h3>
+        <p className="font-semibold text-primaria-light mb-3">
+          {project.slogan}
+        </p>
+        <p className="text-texto-claro flex-grow">{project.description}</p>
+      </div>
+      <div className="p-6 mt-auto bg-gray-50">
+        <Link
+          href={project.link}
+          className="font-bold text-secundaria-DEFAULT hover:text-orange-600 transition-colors"
+        >
+          Saber mais &rarr;
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function ProjectsSection() {
+  return (
+    <section id="projetos" className="py-20 bg-gray-50">
+      <div className="container mx-auto px-6">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-bold text-texto">Nossos Projetos</h2>
+          <p className="text-lg text-texto-claro mt-2">
+            Um ecossistema de soluções para diferentes necessidades.
           </p>
-          <Link href="/produtos/rescuenow" className="text-primaria font-bold text-lg hover:underline">
-            Ver Planos e Preços &rarr;
-          </Link>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {projects.map((project) => (
+            <ProjectCard key={project.name} project={project} />
+          ))}
         </div>
       </div>
     </section>
   );
 }
 
-// Componente para a seção "Sobre Nós"
 function AboutSection() {
   return (
     <section id="sobre" className="bg-white py-20">
       <div className="container mx-auto px-6 text-center">
-        <h3 className="text-4xl font-bold text-texto mb-4">Sobre a CodeVibe Studio</h3>
-        <p className="text-lg text-secundaria max-w-3xl mx-auto">
-          Somos um estúdio de desenvolvimento apaixonado por criar soluções que fazem a diferença.
-          Combinamos design moderno com engenharia de software robusta para entregar produtos que não apenas funcionam,
-          mas que encantam os usuários.
+        <h3 className="text-4xl font-bold text-texto mb-4">
+          Sobre a CodeVibe Studio
+        </h3>
+        <p className="text-lg text-texto-claro max-w-3xl mx-auto">
+          Somos um estúdio de desenvolvimento apaixonado por criar soluções que
+          fazem a diferença. Combinamos design moderno com engenharia de
+          software robusta para entregar produtos que não apenas funcionam, mas
+          que encantam os usuários.
         </p>
       </div>
     </section>
   );
 }
 
-// Componente para o Footer
 function Footer() {
+  const socialLinks = [
+    {
+      icon: MessageCircle,
+      href: "https://wa.me/5532998111973",
+      label: "WhatsApp",
+    },
+    {
+      icon: Instagram,
+      href: "https://instagram.com/codevibestudio",
+      label: "Instagram",
+    },
+    { icon: Mail, href: "mailto:codevibe.br@gmail.com", label: "Email" },
+  ];
+
   return (
-    <footer className="bg-texto text-white py-8">
+    <footer className="bg-texto text-white py-12">
       <div className="container mx-auto px-6 text-center">
-        <p>&copy; {new Date().getFullYear()} CodeVibe Studio. Todos os direitos reservados.</p>
+        <Image
+          src="/codevibestudio.jpg"
+          alt="Logo CodeVibe Studio"
+          width={70}
+          height={70}
+          className="rounded-md mx-auto mb-4"
+        />
+        <p className="text-lg font-bold mb-4">CodeVibe Studio</p>
+        <p className="text-gray-400 mb-6">
+          Transformando ideias em realidade digital.
+        </p>
+        <div className="flex justify-center space-x-6 mb-8">
+          {socialLinks.map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={link.label}
+              className="text-gray-400 hover:text-secundaria-DEFAULT transition-colors"
+            >
+              <link.icon size={28} />
+            </a>
+          ))}
+        </div>
+        <p className="text-gray-500 text-sm">
+          &copy; {new Date().getFullYear()} CodeVibe Studio. Todos os direitos
+          reservados.
+        </p>
       </div>
     </footer>
   );
 }
 
-
 export default function HomePage() {
   return (
-    <main>
+    <main className="bg-fundo">
       <Header />
       <HeroSection />
-      <ProductSection />
+      <ProjectsSection />
       <AboutSection />
       <Footer />
     </main>

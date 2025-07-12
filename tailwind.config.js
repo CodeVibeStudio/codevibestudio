@@ -7,14 +7,20 @@ module.exports = {
   ],
   theme: {
     extend: {
-      // Configuração da paleta de cores fornecida
+      // Nova paleta de cores baseada no seu logo para consistência da marca
       colors: {
-        primaria: "#2563eb",
-        secundaria: "#64748b",
+        primaria: {
+          DEFAULT: "#0D47A1", // Um azul mais profundo e sóbrio
+          light: "#1E88E5",
+        },
+        secundaria: {
+          DEFAULT: "#F57C00", // O laranja vibrante do logo
+          light: "#FFB74D",
+        },
         fundo: "#f8fafc",
         texto: "#1e293b",
+        "texto-claro": "#475569",
       },
-      // Exemplo de extensão de imagem de fundo, se necessário
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":
