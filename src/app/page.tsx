@@ -13,7 +13,7 @@ const projects = [
     slogan: "O Controle na Palma da Sua Mão",
     description:
       "Sistema de gestão empresarial completo para simplificar suas operações, do financeiro aos clientes.",
-    logoUrl: "/rescuenow.jpg",
+    logoUrl: "/rescuenow.png",
     link: "/produtos/rescuenow",
   },
   {
