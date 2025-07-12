@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Mail, MessageCircle, Instagram } from "lucide-react";
 
 // --- DADOS DOS PROJETOS ---
-// Adicionamos o campo 'type' para categorizar cada projeto.
+// Atualize os links '#' para os links reais da App Store/Play Store quando estiverem disponíveis.
 const projects = [
   {
     name: "RescueNow",
@@ -14,7 +14,7 @@ const projects = [
     description:
       "Sistema de gestão empresarial completo para simplificar suas operações, do financeiro aos clientes.",
     logoUrl: "/rescuenow.png",
-    link: "/produtos/rescuenow",
+    link: "/produtos/rescuenow", // Link interno
   },
   {
     name: "VetCare+",
@@ -23,7 +23,7 @@ const projects = [
     description:
       "Software de gestão para clínicas veterinárias, simplificando agendamentos, prontuários e faturamento.",
     logoUrl: "/logovetecare+.png",
-    link: "#", // Crie a página de produto para o VetCare+
+    link: "#", // Link interno (placeholder)
   },
   {
     name: "WordRope",
@@ -32,7 +32,7 @@ const projects = [
     description:
       "Um jogo de palavras viciante que testa seu vocabulário e raciocínio rápido em um formato divertido.",
     logoUrl: "/wordrope.png",
-    link: "https://play.google.com/store/apps/details?id=com.codevibestudio.wordrope", // Link para a App Store / Play Store
+    link: "https://play.google.com/store/apps/details?id=com.codevibestudio.wordrope", // Futuramente, um link externo para a loja de apps
   },
   {
     name: "MeuTreino",
@@ -41,7 +41,7 @@ const projects = [
     description:
       "Aplicativo para academias e personal trainers, facilitando a criação e acompanhamento de treinos.",
     logoUrl: "/icone_meutreino.png",
-    link: "https://meutreino-rose.vercel.app/dashboard", // Link para a App Store / Play Store
+    link: "https://meutreino-rose.vercel.app/dashboard", // Futuramente, um link externo para a loja de apps
   },
 ];
 
@@ -73,7 +73,6 @@ function Header() {
           >
             Sobre Nós
           </Link>
-          {/* MUDANÇA: O botão principal agora é mais abrangente */}
           <Link
             href="#projetos"
             className="bg-secundaria text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors"
@@ -110,9 +109,35 @@ function HeroSection() {
 
 function ProjectCard({ project }: { project: (typeof projects)[0] }) {
   const isSaaS = project.type === "saas";
+  // CORREÇÃO: Verifica se o link é externo (começa com http) ou interno.
+  const isExternal = project.link.startsWith("http");
+
+  const LinkComponent = () => {
+    const linkClasses =
+      "font-bold text-secundaria hover:text-orange-600 transition-colors";
+    const linkText = isSaaS ? "Ver Planos" : "Baixar App";
+
+    if (isExternal) {
+      return (
+        <a
+          href={project.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={linkClasses}
+        >
+          {linkText} &rarr;
+        </a>
+      );
+    }
+    return (
+      <Link href={project.link} className={linkClasses}>
+        {linkText} &rarr;
+      </Link>
+    );
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 flex flex-col relative">
-      {/* MUDANÇA: Tag visual para identificar o tipo de produto */}
       <div className="absolute top-4 right-4 z-10">
         <span
           className={`px-3 py-1 text-xs font-bold text-white rounded-full ${
@@ -137,26 +162,19 @@ function ProjectCard({ project }: { project: (typeof projects)[0] }) {
         <p className="text-texto-claro flex-grow">{project.description}</p>
       </div>
       <div className="p-6 mt-auto bg-gray-50">
-        <Link
-          href={project.link}
-          className="font-bold text-secundaria hover:text-orange-600 transition-colors"
-        >
-          {isSaaS ? "Ver Planos" : "Baixar App"} &rarr;
-        </Link>
+        <LinkComponent />
       </div>
     </div>
   );
 }
 
 function ProjectsSection() {
-  // MUDANÇA: Filtramos os projetos por tipo para exibi-los em seções separadas
   const saasProjects = projects.filter((p) => p.type === "saas");
   const appProjects = projects.filter((p) => p.type === "app");
 
   return (
     <section id="projetos" className="py-20 bg-gray-50">
       <div className="container mx-auto px-6">
-        {/* Seção de SaaS */}
         <div className="mb-16">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-texto">
@@ -172,8 +190,6 @@ function ProjectsSection() {
             ))}
           </div>
         </div>
-
-        {/* Seção de Apps */}
         <div>
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-texto">
@@ -243,6 +259,7 @@ function Footer() {
         </p>
         <div className="flex justify-center space-x-6 mb-8">
           {socialLinks.map((link) => (
+            // CORREÇÃO: Adicionado target="_blank" para abrir em nova aba.
             <a
               key={link.label}
               href={link.href}
