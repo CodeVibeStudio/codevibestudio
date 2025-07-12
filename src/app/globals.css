@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Este arquivo importa as diretivas base do TailwindCSS.
+  As cores e fontes são configuradas no tailwind.config.js
+  e aplicadas no layout.tsx.
+  Você pode adicionar estilos globais personalizados aqui se necessário.
+*/
