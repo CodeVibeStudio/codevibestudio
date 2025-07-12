@@ -1,5 +1,4 @@
-"use client"; // CORREÇÃO: Transformamos a página inteira em um Client Component para simplicidade.
-// Isso resolve o erro do 'onError' e permite mais interatividade no futuro.
+"use client";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -12,7 +11,7 @@ const projects = [
     slogan: "O Controle na Palma da Sua Mão",
     description:
       "Sistema de gestão empresarial completo para simplificar suas operações, do financeiro aos clientes.",
-    logoUrl: "/rescuenow.jpg",
+    logoUrl: "/rescuenow.jpg", // O caminho começa com '/' para indicar a pasta public
     link: "/produtos/rescuenow",
   },
   {
@@ -28,7 +27,7 @@ const projects = [
     slogan: "Cuidando de Quem Sempre Cuida de Você",
     description:
       "Software de gestão para clínicas veterinárias, simplificando agendamentos, prontuários e faturamento.",
-    logoUrl: "/placeholder-logo.svg",
+    logoUrl: "https://placehold.co/60x60/f57c00/FFFFFF?text=V", // Placeholder
     link: "#",
   },
   {
@@ -36,7 +35,7 @@ const projects = [
     slogan: "Sua Jornada Fitness, Personalizada",
     description:
       "Aplicativo para academias e personal trainers, facilitando a criação e acompanhamento de treinos.",
-    logoUrl: "/placeholder-logo.svg",
+    logoUrl: "https://placehold.co/60x60/0D47A1/FFFFFF?text=M", // Placeholder
     link: "#",
   },
 ];
@@ -48,6 +47,7 @@ function Header() {
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
         <Link href="/">
+          {/* O caminho da imagem agora está correto */}
           <Image
             src="/codevibestudio.jpg"
             alt="Logo CodeVibe Studio"
@@ -59,19 +59,20 @@ function Header() {
         <div className="flex items-center space-x-6">
           <Link
             href="#projetos"
-            className="text-texto-claro hover:text-secundaria-DEFAULT transition-colors"
+            className="text-texto-claro hover:text-secundaria transition-colors"
           >
             Projetos
           </Link>
           <Link
             href="#sobre"
-            className="text-texto-claro hover:text-secundaria-DEFAULT transition-colors"
+            className="text-texto-claro hover:text-secundaria transition-colors"
           >
             Sobre Nós
           </Link>
+          {/* CORREÇÃO: Usando as classes de cor simplificadas */}
           <Link
             href="/produtos/rescuenow"
-            className="bg-secundaria-DEFAULT text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors"
+            className="bg-secundaria text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors"
           >
             Conheça o RescueNow
           </Link>
@@ -94,7 +95,7 @@ function HeroSection() {
         </p>
         <Link
           href="#projetos"
-          className="bg-primaria-DEFAULT text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-800 transition-colors"
+          className="bg-primaria text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-800 transition-colors"
         >
           Explore Nossos Projetos
         </Link>
@@ -112,12 +113,7 @@ function ProjectCard({ project }: { project: (typeof projects)[0] }) {
           alt={`Logo ${project.name}`}
           width={60}
           height={60}
-          className="rounded-lg mb-4"
-          // CORREÇÃO: A propriedade onError agora funciona porque o componente pai é um Client Component.
-          onError={(e) => {
-            e.currentTarget.src =
-              "https://placehold.co/60x60/f8fafc/1e293b?text=Logo";
-          }}
+          className="rounded-lg mb-4 object-cover"
         />
         <h3 className="text-2xl font-bold text-texto">{project.name}</h3>
         <p className="font-semibold text-primaria-light mb-3">
@@ -128,7 +124,7 @@ function ProjectCard({ project }: { project: (typeof projects)[0] }) {
       <div className="p-6 mt-auto bg-gray-50">
         <Link
           href={project.link}
-          className="font-bold text-secundaria-DEFAULT hover:text-orange-600 transition-colors"
+          className="font-bold text-secundaria hover:text-orange-600 transition-colors"
         >
           Saber mais &rarr;
         </Link>
@@ -212,7 +208,7 @@ function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={link.label}
-              className="text-gray-400 hover:text-secundaria-DEFAULT transition-colors"
+              className="text-gray-400 hover:text-secundaria transition-colors"
             >
               <link.icon size={28} />
             </a>
