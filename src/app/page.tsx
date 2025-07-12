@@ -11,7 +11,7 @@ const projects = [
     slogan: "O Controle na Palma da Sua Mão",
     description:
       "Sistema de gestão empresarial completo para simplificar suas operações, do financeiro aos clientes.",
-    logoUrl: "/rescuenow.jpg", // O caminho começa com '/' para indicar a pasta public
+    logoUrl: "/rescuenow.png", // O caminho começa com '/' para indicar a pasta public
     link: "/produtos/rescuenow",
   },
   {
@@ -49,7 +49,7 @@ function Header() {
         <Link href="/">
           {/* O caminho da imagem agora está correto */}
           <Image
-            src="/codevibestudio.jpg"
+            src="/codevibestudiologo.png"
             alt="Logo CodeVibe Studio"
             width={50}
             height={50}
