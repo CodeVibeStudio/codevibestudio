@@ -1,10 +1,10 @@
 // src/app/api/register/route.ts
-import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
-import Stripe from 'stripe';
+import { NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase";
+import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-04-10',
+  apiVersion: "2023-10-16",
 });
 
 export async function POST(req: Request) {
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
 
   // 1. Cria empresa
   const { data: empresa, error: empErr } = await supabaseAdmin
-    .from('empresas')
+    .from("empresas")
     .insert({ nome: companyName })
     .select()
     .single();
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     email: adminEmail,
     password,
     email_confirm: true,
-    user_metadata: { empresa_id: empresa.id, role: 'admin' },
+    user_metadata: { empresa_id: empresa.id, role: "admin" },
   });
   if (userErr) return NextResponse.json({ userErr }, { status: 400 });
 
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   });
 
   const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
+    mode: "subscription",
     customer: customer.id,
     line_items: [{ price: chosenPriceId, quantity: 1 }],
     subscription_data: { trial_period_days: 15 },
