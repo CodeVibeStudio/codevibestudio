@@ -1,16 +1,18 @@
+"use client"; // CORREÇÃO: Transformamos a página inteira em um Client Component para simplicidade.
+// Isso resolve o erro do 'onError' e permite mais interatividade no futuro.
+
 import Link from "next/link";
 import Image from "next/image";
 import { Mail, MessageCircle, Instagram } from "lucide-react";
 
 // --- DADOS DOS PROJETOS ---
-// Manter os dados aqui facilita a adição de novos projetos no futuro.
 const projects = [
   {
     name: "RescueNow",
     slogan: "O Controle na Palma da Sua Mão",
     description:
       "Sistema de gestão empresarial completo para simplificar suas operações, do financeiro aos clientes.",
-    logoUrl: "/rescuenow.jpg", // Caminho a partir da pasta /public
+    logoUrl: "/rescuenow.jpg",
     link: "/produtos/rescuenow",
   },
   {
@@ -19,14 +21,14 @@ const projects = [
     description:
       "Um jogo de palavras viciante que testa seu vocabulário e raciocínio rápido em um formato divertido.",
     logoUrl: "/wordrope.png",
-    link: "#", // Coloque o link quando a página do produto estiver pronta
+    link: "#",
   },
   {
     name: "VetCare+",
     slogan: "Cuidando de Quem Sempre Cuida de Você",
     description:
       "Software de gestão para clínicas veterinárias, simplificando agendamentos, prontuários e faturamento.",
-    logoUrl: "/placeholder-logo.svg", // Use um placeholder por enquanto
+    logoUrl: "/placeholder-logo.svg",
     link: "#",
   },
   {
@@ -46,7 +48,6 @@ function Header() {
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
         <Link href="/">
-          {/* Usando o componente Image do Next.js para otimização */}
           <Image
             src="/codevibestudio.jpg"
             alt="Logo CodeVibe Studio"
@@ -112,6 +113,7 @@ function ProjectCard({ project }: { project: (typeof projects)[0] }) {
           width={60}
           height={60}
           className="rounded-lg mb-4"
+          // CORREÇÃO: A propriedade onError agora funciona porque o componente pai é um Client Component.
           onError={(e) => {
             e.currentTarget.src =
               "https://placehold.co/60x60/f8fafc/1e293b?text=Logo";
