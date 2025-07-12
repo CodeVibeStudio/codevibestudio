@@ -3,9 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Mail, MessageCircle, Instagram } from "lucide-react";
+import { ProjectIdeator } from "@/components/ProjectIdeator"; // IMPORTAÇÃO DO NOVO COMPONENTE
 
 // --- DADOS DOS PROJETOS ---
-// Atualize os links '#' para os links reais da App Store/Play Store quando estiverem disponíveis.
 const projects = [
   {
     name: "RescueNow",
@@ -14,7 +14,7 @@ const projects = [
     description:
       "Sistema de gestão empresarial completo para simplificar suas operações, do financeiro aos clientes.",
     logoUrl: "/rescuenow.png",
-    link: "/produtos/rescuenow", // Link interno
+    link: "/produtos/rescuenow",
   },
   {
     name: "VetCare+",
@@ -23,7 +23,7 @@ const projects = [
     description:
       "Software de gestão para clínicas veterinárias, simplificando agendamentos, prontuários e faturamento.",
     logoUrl: "/logovetecare+.png",
-    link: "#", // Link interno (placeholder)
+    link: "#",
   },
   {
     name: "WordRope",
@@ -32,7 +32,7 @@ const projects = [
     description:
       "Um jogo de palavras viciante que testa seu vocabulário e raciocínio rápido em um formato divertido.",
     logoUrl: "/wordrope.png",
-    link: "https://play.google.com/store/apps/details?id=com.codevibestudio.wordrope", // Futuramente, um link externo para a loja de apps
+    link: "https://play.google.com/store/apps/details?id=com.codevibestudio.wordrope",
   },
   {
     name: "MeuTreino",
@@ -41,7 +41,7 @@ const projects = [
     description:
       "Aplicativo para academias e personal trainers, facilitando a criação e acompanhamento de treinos.",
     logoUrl: "/icone_meutreino.png",
-    link: "https://meutreino-rose.vercel.app/dashboard", // Futuramente, um link externo para a loja de apps
+    link: "https://meutreino-rose.vercel.app/dashboard",
   },
 ];
 
@@ -66,6 +66,13 @@ function Header() {
             className="text-texto-claro hover:text-secundaria transition-colors"
           >
             Projetos
+          </Link>
+          {/* Adicionamos um link para a nova seção de IA */}
+          <Link
+            href="#ideator"
+            className="text-texto-claro hover:text-secundaria transition-colors"
+          >
+            Gerador de Ideias
           </Link>
           <Link
             href="#sobre"
@@ -109,7 +116,6 @@ function HeroSection() {
 
 function ProjectCard({ project }: { project: (typeof projects)[0] }) {
   const isSaaS = project.type === "saas";
-  // CORREÇÃO: Verifica se o link é externo (começa com http) ou interno.
   const isExternal = project.link.startsWith("http");
 
   const LinkComponent = () => {
@@ -259,7 +265,6 @@ function Footer() {
         </p>
         <div className="flex justify-center space-x-6 mb-8">
           {socialLinks.map((link) => (
-            // CORREÇÃO: Adicionado target="_blank" para abrir em nova aba.
             <a
               key={link.label}
               href={link.href}
@@ -287,6 +292,8 @@ export default function HomePage() {
       <Header />
       <HeroSection />
       <ProjectsSection />
+      {/* ADICIONAMOS A NOVA SEÇÃO AQUI */}
+      <ProjectIdeator />
       <AboutSection />
       <Footer />
     </main>
