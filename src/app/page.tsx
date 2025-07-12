@@ -27,7 +27,7 @@ const projects = [
     slogan: "Cuidando de Quem Sempre Cuida de Você",
     description:
       "Software de gestão para clínicas veterinárias, simplificando agendamentos, prontuários e faturamento.",
-    logoUrl: "https://placehold.co/60x60/f57c00/FFFFFF?text=V", // Placeholder
+    logoUrl: "/logovetecare+.png", // Placeholder
     link: "#",
   },
   {
@@ -35,7 +35,7 @@ const projects = [
     slogan: "Sua Jornada Fitness, Personalizada",
     description:
       "Aplicativo para academias e personal trainers, facilitando a criação e acompanhamento de treinos.",
-    logoUrl: "https://placehold.co/60x60/0D47A1/FFFFFF?text=M", // Placeholder
+    logoUrl: "/icone_meutreino.png", // Placeholder
     link: "#",
   },
 ];
@@ -190,7 +190,7 @@ function Footer() {
     <footer className="bg-texto text-white py-12">
       <div className="container mx-auto px-6 text-center">
         <Image
-          src="/codevibestudio.jpg"
+          src="/codevibestudiologo.png"
           alt="Logo CodeVibe Studio"
           width={70}
           height={70}
