@@ -1,5 +1,6 @@
-```typescript
+typescript
 // src/app/produtos/[slug]/page.tsx
+
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import Image from "next/image";
