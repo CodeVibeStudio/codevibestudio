@@ -132,13 +132,13 @@ const ProductPlansPage: NextPage<ProductPlansPageProps> = async ({ params }) => 
 export default ProductPlansPage;
 ```
 
-#### Mudanças no `page.tsx`:
-- **Construção do `href` Simplificada**: A URL do `href` foi movida para uma variável `signupUrl` construída com concatenação de strings (`"/signup?planId=" + planId`) em vez de um template literal. Isso evita qualquer problema potencial com o parser de template literals.
-- **Tipagem Mantida**: As interfaces `Plan`, `Product`, e `ProductPlansPageProps` foram preservadas, garantindo tipagem robusta.
-- **Estrutura Intacta**: O restante do código permanece idêntico, exceto pela mudança no `href`.
+// Mudanças no `page.tsx`:
+//- **Construção do `href` Simplificada**: A URL do `href` foi movida para uma variável `signupUrl` construída com concatenação de strings (`"/signup?planId=" + planId`) em vez de um template literal. Isso evita qualquer problema potencial com o parser de template literals.
+//- **Tipagem Mantida**: As interfaces `Plan`, `Product`, e `ProductPlansPageProps` foram preservadas, garantindo tipagem robusta.
+//- **Estrutura Intacta**: O restante do código permanece idêntico, exceto pela mudança no `href`.
 
-#### 2. Corrigir `next.config.js` e Limpar Cache do Vercel
-O aviso sobre `experimental.esmExternals` indica que o Vercel ainda está detectando a configuração antiga, provavelmente devido ao cache de build. Vamos confirmar o `next.config.js` correto e fornecer instruções para limpar o cache:
+// 2. Corrigir `next.config.js` e Limpar Cache do Vercel
+// O aviso sobre `experimental.esmExternals` indica que o Vercel ainda está detectando a configuração antiga, provavelmente devido ao cache de build. Vamos confirmar o `next.config.js` correto e fornecer instruções para limpar o cache:
 
 <xaiArtifact artifact_id="bf928773-7c13-49eb-9134-86fb1f81bc3a" artifact_version_id="7d6170e2-0da4-42a3-9129-d11de4474390" title="next.config.js" contentType="text/javascript">
 ```javascript
@@ -183,48 +183,48 @@ const nextConfig = {
 module.exports = nextConfig;
 ```
 
-#### Ações para `next.config.js`:
-- **Confirmar Configuração**: O código acima já removeu a seção `experimental`, como suger whippersnapper. Verifique se o arquivo no repositório reflete exatamente esse conteúdo.
-- **Limpar Cache do Vercel**:
-  1. No painel do Vercel, vá para o projeto correspondente.
-  2. Acesse a seção **Settings** > **General**.
-  3. Role até **Build Cache** e clique em **Clear Build Cache** (se disponível) ou force um novo deploy sem cache.
-  4. Alternativamente, adicione uma variável de ambiente no Vercel (em **Settings** > **Environment Variables**) chamada `VERCEL_FORCE_NO_BUILD_CACHE` com o valor `true` para forçar um build sem cache.
+// Ações para `next.config.js`:
+// - **Confirmar Configuração**: O código acima já removeu a seção `experimental`, como suger whippersnapper. Verifique se o arquivo no repositório reflete exatamente esse conteúdo.
+// - **Limpar Cache do Vercel**:
+//  1. No painel do Vercel, vá para o projeto correspondente.
+//  2. Acesse a seção **Settings** > **General**.
+//  3. Role até **Build Cache** e clique em **Clear Build Cache** (se disponível) ou force um novo deploy sem cache.
+//  4. Alternativamente, adicione uma variável de ambiente no Vercel (em **Settings** > **Environment Variables**) chamada `VERCEL_FORCE_NO_BUILD_CACHE` com o valor `true` para forçar um build sem cache.
 
-#### 3. Testar o Build Localmente
-Antes de fazer o deploy, teste o build localmente para garantir que o erro de sintaxe foi resolvido:
+// #### 3. Testar o Build Localmente
+// Antes de fazer o deploy, teste o build localmente para garantir que o erro de sintaxe foi resolvido:
 ```bash
 npm run build
 ```
-Se o build local for bem-sucedido, o problema está isolado ao ambiente do Vercel, provavelmente devido ao cache.
+// Se o build local for bem-sucedido, o problema está isolado ao ambiente do Vercel, provavelmente devido ao cache.
 
-#### 4. Commit e Deploy
-1. Atualize os arquivos no repositório:
+// #### 4. Commit e Deploy
+// 1. Atualize os arquivos no repositório:
    ```bash
    git add src/app/produtos/[slug]/page.tsx next.config.js
    git commit -m "Corrige sintaxe no href do page.tsx e remove experimental.esmExternals"
    git push
    ```
-2. Faça um novo deploy no Vercel, garantindo que o cache seja limpo (conforme instruções acima).
+// 2. Faça um novo deploy no Vercel, garantindo que o cache seja limpo (conforme instruções acima).
 
-#### 5. Verificar Outros Possíveis Problemas
-- **Caracteres Invisíveis**: Certifique-se de que o arquivo `page.tsx` não contém caracteres invisíveis (como espaços Unicode ou quebras de linha incorretas). Copie o código fornecido acima diretamente para o arquivo para evitar isso.
-- **Dependências**: Confirme que as dependências estão atualizadas:
+// #### 5. Verificar Outros Possíveis Problemas
+// - **Caracteres Invisíveis**: Certifique-se de que o arquivo `page.tsx` não contém caracteres invisíveis (como espaços Unicode ou quebras de linha incorretas). Copie o código fornecido acima diretamente para o arquivo para evitar isso.
+// - **Dependências**: Confirme que as dependências estão atualizadas:
   ```bash
   npm install next@latest typescript@latest @types/node@latest
   ```
-- **Formatação**: Execute `npm run lint` ou `npm run format` (se você usa ferramentas como ESLint ou Prettier) para garantir que o código está formatado corretamente.
+// - **Formatação**: Execute `npm run lint` ou `npm run format` (se você usa ferramentas como ESLint ou Prettier) para garantir que o código está formatado corretamente.
 
-### Resumo das Ações
-- **Corrigido `page.tsx`**: A construção do `href` foi simplificada para evitar problemas com template literals.
-- **Corrigido `next.config.js`**: Confirmada a remoção de `experimental.esmExternals`.
-- **Cache do Vercel**: Instruções fornecidas para limpar o cache de build.
-- **Teste Local**: Recomendado testar o build localmente antes do deploy.
-- **Deploy**: Commit e redeploy com cache limpo.
+// ### Resumo das Ações
+// - **Corrigido `page.tsx`**: A construção do `href` foi simplificada para evitar problemas com template literals.
+// - **Corrigido `next.config.js`**: Confirmada a remoção de `experimental.esmExternals`.
+// - **Cache do Vercel**: Instruções fornecidas para limpar o cache de build.
+// - **Teste Local**: Recomendado testar o build localmente antes do deploy.
+// - **Deploy**: Commit e redeploy com cache limpo.
 
-Se o erro persistir após essas alterações, compartilhe:
-1. O log completo do Vercel.
-2. O conteúdo exato do arquivo `package.json` para verificar versões de dependências.
-3. Qualquer mensagem de erro adicional do build local (se ocorrer).
+// Se o erro persistir após essas alterações, compartilhe:
+// 1. O log completo do Vercel.
+// 2. O conteúdo exato do arquivo `package.json` para verificar versões de dependências.
+// 3. Qualquer mensagem de erro adicional do build local (se ocorrer).
 
-Isso deve resolver o problema, mas estou pronto para ajudar com qualquer erro remanescente!
+// Isso deve resolver o problema, mas estou pronto para ajudar com qualquer erro remanescente!

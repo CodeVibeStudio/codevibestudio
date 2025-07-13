@@ -1,9 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    esmExternals: false,
-  },
-  // ADICIONAMOS ESTA SEÇÃO PARA AUTORIZAR OS DOMÍNIOS DAS IMAGENS
   images: {
     remotePatterns: [
       {
