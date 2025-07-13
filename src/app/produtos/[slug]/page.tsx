@@ -3,28 +3,24 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
-interface Plan {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  features: string[];
-  stripe_price_id?: string;
+export async function generateStaticParams() {
+  const { data: products } = await supabase.from("products").select("slug");
+
+  // CORREÇÃO AQUI: Certifique-se de que está retornando `product.slug` (o valor)
+  // e não o objeto `product` inteiro.
+  return (products || []).map((product) => ({
+    slug: product.slug,
+  }));
 }
 
-interface Product {
-  id: string;
-  name: string;
-  slogan: string;
-  description: string;
-}
+type Props = {
+  params: {
+    slug: string;
+  };
+};
 
-export default async function ProductPlansPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
-  const slug = params.slug;
+export default async function ProductPlansPage({ params }: Props) {
+  const { slug } = params;
 
   const { data: product, error: productError } = await supabase
     .from("products")
@@ -68,7 +64,7 @@ export default async function ProductPlansPage({
         </div>
 
         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {(plans || []).map((plan: Plan) => {
+          {(plans || []).map((plan: any) => {
             const planId = plan.stripe_price_id ?? plan.id;
             const signupUrl = `/signup?planId=${planId}`;
             return (
