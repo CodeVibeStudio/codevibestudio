@@ -1,50 +1,29 @@
 // src/app/page.tsx
-// Esta página é um Componente de Servidor. A diretiva "use client" foi removida.
-
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
+import Header from "@/components/Header";
+import { ProjectIdeator } from "@/components/ProjectIdeator";
 import { Mail, MessageCircle } from "lucide-react";
 
-// Importando componentes que podem estar em arquivos separados
-import Header from "@/components/Header"; // Header é um componente de cliente
-import { ProjectIdeator } from "@/components/ProjectIdeator";
+// SOLUÇÃO: Força a página a ser renderizada dinamicamente no servidor a cada visita.
+// Isto garante que os dados dos produtos são sempre os mais recentes.
+export const dynamic = "force-dynamic";
 
-// Tipo para os produtos, conforme definido em page 2.tsx
+// Tipos de dados
 type Product = {
   id: number;
   name: string;
   type: "saas" | "app";
   slogan: string;
   description: string;
-  logo_url: string; // nome da coluna no Supabase
-  web_link: string | null; // nome da coluna no Supabase
-  app_link: string | null; // nome da coluna no Supabase
-  slug: string | null; // nome da coluna no Supabase
+  logo_url: string;
+  web_link: string | null;
+  app_link: string | null;
+  slug: string | null;
 };
 
-// --- COMPONENTES INTERNOS DA PÁGINA (SERVER COMPONENTS) ---
-
-const InstagramIcon = (
-  props: React.SVGProps<SVGSVGElement> // Retirado de page 2.tsx
-) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-  </svg>
-);
+// --- COMPONENTES ---
 
 function HeroSection() {
   return (
@@ -68,20 +47,16 @@ function HeroSection() {
   );
 }
 
-// Usando a versão mais atualizada do ProjectCard de page 2.tsx
 function ProjectCard({ project }: { project: Product }) {
   const isSaaS = project.type === "saas";
-
-  // Lógica para criar o link dinâmico para páginas de detalhes do produto
   const webLinkHref =
     isSaaS && project.slug ? `/produtos/${project.slug}` : project.web_link;
-
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 flex flex-col">
       <div className="p-6 flex-grow">
         <div className="flex justify-between items-start mb-4">
           <Image
-            src={project.logo_url} // A propriedade é logo_url
+            src={project.logo_url}
             alt={`Logo ${project.name}`}
             width={60}
             height={60}
@@ -102,7 +77,6 @@ function ProjectCard({ project }: { project: Product }) {
         <p className="text-texto-claro">{project.description}</p>
       </div>
       <div className="p-6 mt-auto bg-gray-50 border-t">
-        {/* Layout de botões aprimorado de page 2.tsx */}
         <div className="flex flex-col sm:flex-row gap-3">
           {webLinkHref && (
             <Link
@@ -135,40 +109,36 @@ function ProjectsSection({ products }: { products: Product[] }) {
   return (
     <section id="projetos" className="py-20 bg-gray-50">
       <div className="container mx-auto px-6">
-        {saasProjects.length > 0 && (
-          <div className="mb-16">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold text-texto">
-                Softwares para Empresas (SaaS)
-              </h2>
-              <p className="text-lg text-texto-claro mt-2">
-                Soluções robustas para otimizar a gestão do seu negócio.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {saasProjects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
-            </div>
+        <div className="mb-16">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-texto">
+              Softwares para Empresas (SaaS)
+            </h2>
+            <p className="text-lg text-texto-claro mt-2">
+              Soluções robustas para otimizar a gestão do seu negócio.
+            </p>
           </div>
-        )}
-        {appProjects.length > 0 && (
-          <div>
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold text-texto">
-                Aplicativos e Jogos
-              </h2>
-              <p className="text-lg text-texto-claro mt-2">
-                Experiências mobile criativas e envolventes.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {appProjects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {saasProjects.map((project) => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
           </div>
-        )}
+        </div>
+        <div>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-texto">
+              Aplicativos e Jogos
+            </h2>
+            <p className="text-lg text-texto-claro mt-2">
+              Experiências mobile criativas e envolventes.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {appProjects.map((project) => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -192,7 +162,25 @@ function AboutSection() {
   );
 }
 
-// Usando o componente Footer completo de page 2.tsx
+const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+  </svg>
+);
+
 function Footer() {
   const socialLinks = [
     {
@@ -244,9 +232,8 @@ function Footer() {
   );
 }
 
-// --- PÁGINA PRINCIPAL (ASYNC SERVER COMPONENT) ---
+// --- PÁGINA PRINCIPAL ---
 export default async function HomePage() {
-  // Busca de dados no servidor, como em page 1.tsx
   const { data: products, error } = await supabase
     .from("products")
     .select("*")
@@ -254,14 +241,12 @@ export default async function HomePage() {
 
   if (error) {
     console.error("Erro ao buscar produtos:", error.message);
-    // Em um cenário real, você poderia mostrar uma página de erro aqui
   }
 
   return (
     <main className="bg-fundo">
       <Header />
       <HeroSection />
-      {/* Passa os produtos para o componente, usando um array vazio como fallback */}
       <ProjectsSection products={products || []} />
       <ProjectIdeator />
       <AboutSection />
