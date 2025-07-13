@@ -19,11 +19,11 @@ interface Product {
   description: string;
 }
 
-type Props = {
+export default async function ProductPlansPage({
+  params,
+}: {
   params: { slug: string };
-};
-
-export default async function ProductPlansPage({ params }: Props) {
+}) {
   const slug = params.slug;
 
   // Busca o produto
