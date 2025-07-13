@@ -1,12 +1,8 @@
-// src/app/produtos/[slug]/page.tsx
-
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { NextPage } from "next";
 
-// Definir interfaces para tipagem
 interface Plan {
   id: string;
   name: string;
@@ -23,15 +19,11 @@ interface Product {
   description: string;
 }
 
-// Tipagem para os parâmetros da página
-interface ProductPlansPageProps {
+type Props = {
   params: { slug: string };
-}
+};
 
-// Usar NextPage para tipar a página
-const ProductPlansPage: NextPage<ProductPlansPageProps> = async ({
-  params,
-}) => {
+export default async function ProductPlansPage({ params }: Props) {
   const slug = params.slug;
 
   // Busca o produto
@@ -46,7 +38,7 @@ const ProductPlansPage: NextPage<ProductPlansPageProps> = async ({
   }
 
   // Busca os planos do produto
-  const { data: plans, error: plansError } = await supabase
+  const { data: plans } = await supabase
     .from("plans")
     .select("id, name, description, price, features, stripe_price_id")
     .eq("product_id", product.id)
@@ -77,9 +69,7 @@ const ProductPlansPage: NextPage<ProductPlansPageProps> = async ({
         </div>
         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {(plans || []).map((plan: Plan) => {
-            // Definir o planId de forma explícita
             const planId = plan.stripe_price_id ?? plan.id;
-            // Construir a URL do href fora do template literal
             const signupUrl = "/signup?planId=" + planId;
             return (
               <div
@@ -129,11 +119,4 @@ const ProductPlansPage: NextPage<ProductPlansPageProps> = async ({
       </main>
     </div>
   );
-};
-
-export default ProductPlansPage;
-
-// Mudanças no page.tsx:
-// - Construção do href simplificada
-// - Tipagem mantida
-// - Estrutura intacta
+}
