@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, MessageCircle, Instagram } from "lucide-react";
+import { Mail, MessageCircle, X } from "lucide-react";
 import { ProjectIdeator } from "@/components/ProjectIdeator"; // IMPORTAÇÃO DO NOVO COMPONENTE
 
 // --- DADOS DOS PROJETOS ---
@@ -48,38 +49,39 @@ const projects = [
 // --- COMPONENTES DA PÁGINA ---
 
 function Header() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const navLinks = [
+    { href: "#projetos", label: "Projetos" },
+    { href: "#ideator", label: "Gerador de Ideias" },
+    { href: "#sobre", label: "Sobre Nós" },
+  ];
+
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
         <Link href="/">
+          {/* Caminho do logo corrigido para o que funcionou anteriormente */}
           <Image
-            src="/codevibestudiologo.png"
+            src="/codevibestudio.jpeg"
             alt="Logo CodeVibe Studio"
             width={50}
             height={50}
             className="rounded-md"
           />
         </Link>
-        <div className="flex items-center space-x-6">
-          <Link
-            href="#projetos"
-            className="text-texto-claro hover:text-secundaria transition-colors"
-          >
-            Projetos
-          </Link>
-          {/* Adicionamos um link para a nova seção de IA */}
-          <Link
-            href="#ideator"
-            className="text-texto-claro hover:text-secundaria transition-colors"
-          >
-            Gerador de Ideias
-          </Link>
-          <Link
-            href="#sobre"
-            className="text-texto-claro hover:text-secundaria transition-colors"
-          >
-            Sobre Nós
-          </Link>
+
+        {/* Menu para Desktop (escondido em telas pequenas) */}
+        <div className="hidden md:flex items-center space-x-6">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-texto-claro hover:text-secundaria transition-colors"
+            >
+              {link.label}
+            </Link>
+          ))}
           <Link
             href="#projetos"
             className="bg-secundaria text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors"
@@ -87,7 +89,42 @@ function Header() {
             Nossas Soluções
           </Link>
         </div>
+
+        {/* Botão do Menu Hambúrguer (visível apenas em telas pequenas) */}
+        <div className="md:hidden">
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Abrir menu"
+          >
+            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
+        </div>
       </nav>
+
+      {/* Painel do Menu Mobile */}
+      {isMenuOpen && (
+        <div className="md:hidden absolute top-full left-0 w-full bg-white shadow-lg">
+          <div className="flex flex-col items-center p-4 space-y-4">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-texto-claro hover:text-secundaria transition-colors w-full text-center py-2"
+                onClick={() => setIsMenuOpen(false)} // Fecha o menu ao clicar
+              >
+                {link.label}
+              </Link>
+            ))}
+            <Link
+              href="#projetos"
+              className="bg-secundaria text-white font-bold py-3 px-6 rounded-lg hover:bg-orange-600 transition-colors w-full text-center"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Nossas Soluções
+            </Link>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
@@ -234,6 +271,26 @@ function AboutSection() {
   );
 }
 
+// CORREÇÃO: Novo componente para o ícone do Instagram, usando SVG.
+const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+  </svg>
+);
+
 function Footer() {
   const socialLinks = [
     {
@@ -241,8 +298,9 @@ function Footer() {
       href: "https://wa.me/5532998111973",
       label: "WhatsApp",
     },
+    // CORREÇÃO: Usando o novo componente InstagramIcon no lugar do ícone preterido.
     {
-      icon: Instagram,
+      icon: InstagramIcon,
       href: "https://instagram.com/codevibestudio",
       label: "Instagram",
     },
