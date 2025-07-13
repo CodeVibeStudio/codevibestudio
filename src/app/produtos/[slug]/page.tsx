@@ -13,7 +13,7 @@ interface Plan {
   description: string;
   price: number;
   features: string[];
-  stripe_price怎么_id?: string;
+  stripe_price_id?: string;
 }
 
 interface Product {
@@ -77,6 +77,8 @@ const ProductPlansPage: NextPage<ProductPlansPageProps> = async ({ params }) => 
           {(plans || []).map((plan: Plan) => {
             // Definir o planId de forma explícita
             const planId = plan.stripe_price_id ?? plan.id;
+            // Construir a URL do href fora do template literal
+            const signupUrl = "/signup?planId=" + planId;
             return (
               <div
                 key={plan.id}
@@ -113,7 +115,7 @@ const ProductPlansPage: NextPage<ProductPlansPageProps> = async ({ params }) => 
                   ))}
                 </ul>
                 <Link
-                  href={`/signup?planId=${planId}`}
+                  href={signupUrl}
                   className="mt-8 block w-full text-center font-bold py-3 px-6 rounded-lg bg-primaria text-white hover:bg-blue-800 transition-colors"
                 >
                   Contratar Plano
@@ -131,16 +133,14 @@ export default ProductPlansPage;
 ```
 
 #### Mudanças no `page.tsx`:
-- **Correção do `href`**:
-  - A expressão `href={`/signup?planId=${plan.stripe_price_id || plan.id}`}` foi substituída por uma abordagem mais explícita, definindo `const planId = plan.stripe_price_id ?? plan.id;` antes de renderizar o `Link`. Isso usa o operador de coalescência nula (`??`) para maior clareza e compatibilidade com TypeScript.
-  - O `.map` foi ajustado para usar um bloco explícito com `{}` para suportar a lógica adicional.
-- **Tipagem Mantida**: As interfaces `Plan`, `Product` e `ProductPlansPageProps` foram mantidas, com a correção de um erro de digitação em `stripe_price_id` na interface `Plan` (estava `stripe_price怎么_id` no código fornecido, provavelmente um erro de cópia).
-- **Sem Alterações Estruturais**: O restante do código foi mantido idêntico, exceto pela correção no `href`.
+- **Construção do `href` Simplificada**: A URL do `href` foi movida para uma variável `signupUrl` construída com concatenação de strings (`"/signup?planId=" + planId`) em vez de um template literal. Isso evita qualquer problema potencial com o parser de template literals.
+- **Tipagem Mantida**: As interfaces `Plan`, `Product`, e `ProductPlansPageProps` foram preservadas, garantindo tipagem robusta.
+- **Estrutura Intacta**: O restante do código permanece idêntico, exceto pela mudança no `href`.
 
-#### 2. Corrigir `next.config.js`
-O aviso sobre `experimental.esmExternals` persiste, o que sugere que o Vercel ainda está usando uma versão antiga do `next.config.js` ou que a configuração não foi totalmente removida. Vamos garantir que a seção `experimental` seja eliminada, conforme sugerido anteriormente. Aqui está o `next.config.js` corrigido (idêntico ao fornecido anteriormente, mas ascended for clarity):
+#### 2. Corrigir `next.config.js` e Limpar Cache do Vercel
+O aviso sobre `experimental.esmExternals` indica que o Vercel ainda está detectando a configuração antiga, provavelmente devido ao cache de build. Vamos confirmar o `next.config.js` correto e fornecer instruções para limpar o cache:
 
-<xaiArtifact artifact_id="6dfbe4fc-7ee4-4e76-b5b4-e6ca4e938499" artifact_version_id="1d08c9f8-f825-44c2-bd82-d56ef189ee49" title="next.config.js" contentType="text/javascript">
+<xaiArtifact artifact_id="bf928773-7c13-49eb-9134-86fb1f81bc3a" artifact_version_id="7d6170e2-0da4-42a3-9129-d11de4474390" title="next.config.js" contentType="text/javascript">
 ```javascript
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -183,12 +183,48 @@ const nextConfig = {
 module.exports = nextConfig;
 ```
 
-#### Mudanças no `next.config.js`:
-- **Remoção de `experimental`**: Confirmado que a seção `experimental` foi removida para eliminar o aviso.
-- **Sem Alterações Adicionais**: O restante da configuração permanece inalterado.
+#### Ações para `next.config.js`:
+- **Confirmar Configuração**: O código acima já removeu a seção `experimental`, como suger whippersnapper. Verifique se o arquivo no repositório reflete exatamente esse conteúdo.
+- **Limpar Cache do Vercel**:
+  1. No painel do Vercel, vá para o projeto correspondente.
+  2. Acesse a seção **Settings** > **General**.
+  3. Role até **Build Cache** e clique em **Clear Build Cache** (se disponível) ou force um novo deploy sem cache.
+  4. Alternativamente, adicione uma variável de ambiente no Vercel (em **Settings** > **Environment Variables**) chamada `VERCEL_FORCE_NO_BUILD_CACHE` com o valor `true` para forçar um build sem cache.
 
-#### 3. Verificar o Cache do Vercel
-O aviso persistente sobre `experimental.esmExternals` sugere que o Vercel pode estar usando uma versão em cache do `next.config.js`. Para garantir que a nova configuração seja aplicada:
-1. Limpe o cache de build no Vercel:
-   - No painel do Vercel, vá para as configurações do projeto e selecioneCHF
-System: * Today's date and time is 03:41 PM -03 on Sunday, July 13, 2025.
+#### 3. Testar o Build Localmente
+Antes de fazer o deploy, teste o build localmente para garantir que o erro de sintaxe foi resolvido:
+```bash
+npm run build
+```
+Se o build local for bem-sucedido, o problema está isolado ao ambiente do Vercel, provavelmente devido ao cache.
+
+#### 4. Commit e Deploy
+1. Atualize os arquivos no repositório:
+   ```bash
+   git add src/app/produtos/[slug]/page.tsx next.config.js
+   git commit -m "Corrige sintaxe no href do page.tsx e remove experimental.esmExternals"
+   git push
+   ```
+2. Faça um novo deploy no Vercel, garantindo que o cache seja limpo (conforme instruções acima).
+
+#### 5. Verificar Outros Possíveis Problemas
+- **Caracteres Invisíveis**: Certifique-se de que o arquivo `page.tsx` não contém caracteres invisíveis (como espaços Unicode ou quebras de linha incorretas). Copie o código fornecido acima diretamente para o arquivo para evitar isso.
+- **Dependências**: Confirme que as dependências estão atualizadas:
+  ```bash
+  npm install next@latest typescript@latest @types/node@latest
+  ```
+- **Formatação**: Execute `npm run lint` ou `npm run format` (se você usa ferramentas como ESLint ou Prettier) para garantir que o código está formatado corretamente.
+
+### Resumo das Ações
+- **Corrigido `page.tsx`**: A construção do `href` foi simplificada para evitar problemas com template literals.
+- **Corrigido `next.config.js`**: Confirmada a remoção de `experimental.esmExternals`.
+- **Cache do Vercel**: Instruções fornecidas para limpar o cache de build.
+- **Teste Local**: Recomendado testar o build localmente antes do deploy.
+- **Deploy**: Commit e redeploy com cache limpo.
+
+Se o erro persistir após essas alterações, compartilhe:
+1. O log completo do Vercel.
+2. O conteúdo exato do arquivo `package.json` para verificar versões de dependências.
+3. Qualquer mensagem de erro adicional do build local (se ocorrer).
+
+Isso deve resolver o problema, mas estou pronto para ajudar com qualquer erro remanescente!
