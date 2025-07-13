@@ -4,11 +4,33 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
+// CORREÇÃO: Definimos tipos explícitos para os nossos dados
+type Plan = {
+  id: number;
+  name: string;
+  description: string | null;
+  price: number;
+  features: string[] | null;
+  stripe_price_id: string | null;
+};
+
+type Product = {
+  id: number;
+  name: string;
+  slogan: string | null;
+  description: string | null;
+};
+
+// CORREÇÃO: Definimos um tipo explícito para as props da página
+interface ProductPlansPageProps {
+  params: { slug: string };
+}
+
 // Função para buscar os dados do produto e seus planos no servidor
 async function getProductWithPlans(slug: string) {
   const { data: product, error: productError } = await supabase
     .from("products")
-    .select("*")
+    .select("id, name, slogan, description")
     .eq("slug", slug)
     .single();
 
@@ -18,20 +40,16 @@ async function getProductWithPlans(slug: string) {
 
   const { data: plans, error: plansError } = await supabase
     .from("plans")
-    .select("*")
+    .select("id, name, description, price, features, stripe_price_id")
     .eq("product_id", product.id)
     .order("price", { ascending: true });
 
-  return { product, plans: plans || [] };
+  return { product: product as Product, plans: (plans as Plan[]) || [] };
 }
 
-// CORREÇÃO: A tipagem das props agora está diretamente na assinatura da função.
-// Esta é uma abordagem alternativa para resolver o erro de compilação.
 export default async function ProductPlansPage({
   params,
-}: {
-  params: { slug: string };
-}) {
+}: ProductPlansPageProps) {
   const data = await getProductWithPlans(params.slug);
 
   if (!data) {
@@ -64,7 +82,7 @@ export default async function ProductPlansPage({
           <p className="text-lg text-texto-claro">{product.description}</p>
         </div>
         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {plans.map((plan: any) => (
+          {plans.map((plan) => (
             <div
               key={plan.id}
               className="border rounded-lg p-8 flex flex-col bg-white shadow-lg"
