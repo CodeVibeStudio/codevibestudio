@@ -1,12 +1,14 @@
 "use client";
 
+// CORREÇÃO: Adicionado 'Menu' à lista de importações.
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, MessageCircle, X } from "lucide-react";
-import { ProjectIdeator } from "@/components/ProjectIdeator"; // IMPORTAÇÃO DO NOVO COMPONENTE
+import { Mail, MessageCircle, Menu, X } from "lucide-react";
+import { ProjectIdeator } from "@/components/ProjectIdeator";
 
 // --- DADOS DOS PROJETOS ---
+// Mantidos exatamente como você forneceu.
 const projects = [
   {
     name: "RescueNow",
@@ -61,7 +63,6 @@ function Header() {
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
         <Link href="/">
-          {/* Caminho do logo corrigido para o que funcionou anteriormente */}
           <Image
             src="/codevibestudio.jpeg"
             alt="Logo CodeVibe Studio"
@@ -96,6 +97,7 @@ function Header() {
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Abrir menu"
           >
+            {/* Agora o React sabe o que é o componente 'Menu' */}
             {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
         </div>
@@ -271,7 +273,6 @@ function AboutSection() {
   );
 }
 
-// CORREÇÃO: Novo componente para o ícone do Instagram, usando SVG.
 const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -298,7 +299,6 @@ function Footer() {
       href: "https://wa.me/5532998111973",
       label: "WhatsApp",
     },
-    // CORREÇÃO: Usando o novo componente InstagramIcon no lugar do ícone preterido.
     {
       icon: InstagramIcon,
       href: "https://instagram.com/codevibestudio",
@@ -350,7 +350,6 @@ export default function HomePage() {
       <Header />
       <HeroSection />
       <ProjectsSection />
-      {/* ADICIONAMOS A NOVA SEÇÃO AQUI */}
       <ProjectIdeator />
       <AboutSection />
       <Footer />
