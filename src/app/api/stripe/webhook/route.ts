@@ -13,8 +13,16 @@ const relevantEvents = new Set([
 export async function POST(req: NextRequest) {
   const body = await req.text();
 
-  // CORREÇÃO: Usamos 'await' para esperar que os headers sejam lidos.
-  const signature = headers().get("Stripe-Signature") as string;
+  // CORREÇÃO: Verifica se headers() retorna um objeto com método 'get'
+  const headersInstance = headers();
+  if (!headersInstance.get) {
+    console.error("Erro: headers() não retornou um objeto com método 'get'");
+    return NextResponse.json(
+      { error: "Erro interno no servidor: headers indisponíveis" },
+      { status: 500 }
+    );
+  }
+  const signature = headersInstance.get("Stripe-Signature") as string;
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
   let event: Stripe.Event;
