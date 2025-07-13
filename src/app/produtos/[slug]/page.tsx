@@ -19,6 +19,7 @@ interface Product {
   description: string;
 }
 
+// ✅ Correção principal aqui: tipagem diretamente no parâmetro da função, sem definir Props separado
 export default async function ProductPlansPage({
   params,
 }: {
