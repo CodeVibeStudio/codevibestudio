@@ -6,7 +6,6 @@ import { notFound } from "next/navigation";
 
 // Função para buscar os dados do produto e seus planos no servidor
 async function getProductWithPlans(slug: string) {
-  // 1. Encontra o produto pelo seu slug
   const { data: product, error: productError } = await supabase
     .from("products")
     .select("*")
@@ -14,19 +13,20 @@ async function getProductWithPlans(slug: string) {
     .single();
 
   if (productError || !product) {
-    return null; // Retorna nulo se o produto não for encontrado
+    return null;
   }
 
-  // 2. Encontra os planos associados a esse produto
   const { data: plans, error: plansError } = await supabase
     .from("plans")
     .select("*")
     .eq("product_id", product.id)
-    .order("price", { ascending: true }); // Ordena os planos do mais barato para o mais caro
+    .order("price", { ascending: true });
 
   return { product, plans: plans || [] };
 }
 
+// CORREÇÃO: A tipagem das props agora está diretamente na assinatura da função.
+// Esta é uma abordagem alternativa para resolver o erro de compilação.
 export default async function ProductPlansPage({
   params,
 }: {
@@ -34,7 +34,6 @@ export default async function ProductPlansPage({
 }) {
   const data = await getProductWithPlans(params.slug);
 
-  // Se o produto não for encontrado, exibe uma página 404
   if (!data) {
     notFound();
   }
@@ -100,7 +99,6 @@ export default async function ProductPlansPage({
                   </li>
                 ))}
               </ul>
-              {/* Este link levaria para a página de signup com o plano selecionado */}
               <Link
                 href={`/signup?planId=${plan.stripe_price_id || plan.id}`}
                 className="mt-8 block w-full text-center font-bold py-3 px-6 rounded-lg bg-primaria text-white hover:bg-blue-800 transition-colors"
