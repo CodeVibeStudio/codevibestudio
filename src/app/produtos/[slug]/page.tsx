@@ -19,7 +19,6 @@ interface Product {
   description: string;
 }
 
-// ✅ Correção principal aqui: tipagem diretamente no parâmetro da função, sem definir Props separado
 export default async function ProductPlansPage({
   params,
 }: {
@@ -27,7 +26,6 @@ export default async function ProductPlansPage({
 }) {
   const slug = params.slug;
 
-  // Busca o produto
   const { data: product, error: productError } = await supabase
     .from("products")
     .select("id, name, slogan, description")
@@ -38,7 +36,6 @@ export default async function ProductPlansPage({
     notFound();
   }
 
-  // Busca os planos do produto
   const { data: plans } = await supabase
     .from("plans")
     .select("id, name, description, price, features, stripe_price_id")
@@ -49,7 +46,7 @@ export default async function ProductPlansPage({
     <div className="bg-fundo min-h-screen">
       <header className="py-6">
         <div className="container mx-auto px-6 text-center">
-          <Link href="/" className="inline-block">
+          <Link href="/">
             <Image
               src="/codevibestudio.jpeg"
               alt="Logo CodeVibe Studio"
@@ -60,6 +57,7 @@ export default async function ProductPlansPage({
           </Link>
         </div>
       </header>
+
       <main className="container mx-auto px-6 py-12">
         <div className="text-center max-w-3xl mx-auto">
           <h1 className="text-5xl font-extrabold text-texto">{product.name}</h1>
@@ -68,10 +66,11 @@ export default async function ProductPlansPage({
           </p>
           <p className="text-lg text-texto-claro">{product.description}</p>
         </div>
+
         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {(plans || []).map((plan: Plan) => {
             const planId = plan.stripe_price_id ?? plan.id;
-            const signupUrl = "/signup?planId=" + planId;
+            const signupUrl = `/signup?planId=${planId}`;
             return (
               <div
                 key={plan.id}
