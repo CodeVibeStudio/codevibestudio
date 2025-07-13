@@ -1,36 +1,105 @@
-import { NextResponse } from 'next/server';
-import { stripe } from '@/lib/stripe';
-import { supabaseAdmin } from '@/lib/supabase';
+import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
+import Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
+// CORREÇÃO: Importamos a função getSupabaseAdmin
+import { getSupabaseAdmin } from "@/lib/supabase";
 
-export async function POST(req: Request) {
-  const sig = req.headers.get('stripe-signature')!;
+const relevantEvents = new Set([
+  "checkout.session.completed",
+  "customer.subscription.updated",
+  "customer.subscription.deleted",
+]);
+
+export async function POST(req: NextRequest) {
   const body = await req.text();
+  const sig = headers().get("Stripe-Signature") as string;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+  let event: Stripe.Event;
 
-  let event;
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET!
+    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+  } catch (err: any) {
+    console.error(`❌ Erro na verificação do webhook: ${err.message}`);
+    return NextResponse.json(
+      { error: `Webhook Error: ${err.message}` },
+      { status: 400 }
     );
-  } catch (err) {
-    return NextResponse.json({ error: 'Sig mismatch' }, { status: 400 });
   }
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as any;
-    const line = await stripe.checkout.sessions.listLineItems(session.id);
-    const priceId = line.data[0]?.price?.id;
-    const customer = await stripe.customers.retrieve(session.customer as string);
-    const empresaId = (customer as any).metadata.empresa_id;
+  if (relevantEvents.has(event.type)) {
+    // CORREÇÃO: Chamamos a função para obter o cliente de administração
+    const supabaseAdmin = getSupabaseAdmin();
 
-    await supabaseAdmin.from('subscriptions').upsert({
-      empresa_id: empresaId,
-      stripe_customer_id: session.customer,
-      stripe_subscription_id: session.subscription,
-      plano: priceId,
-      status: 'active'
-    });
+    try {
+      switch (event.type) {
+        case "checkout.session.completed": {
+          const session = event.data.object as Stripe.Checkout.Session;
+          const subscription = await stripe.subscriptions.retrieve(
+            session.subscription as string
+          );
+          const customerId = session.customer as string;
+
+          const customer = (await stripe.customers.retrieve(
+            customerId
+          )) as Stripe.Customer;
+          const empresaId = customer.metadata.empresaId;
+
+          if (!empresaId) {
+            throw new Error(
+              "empresaId não encontrado nos metadados do cliente Stripe."
+            );
+          }
+
+          await supabaseAdmin
+            .from("subscriptions")
+            .update({
+              status: subscription.status,
+              stripe_subscription_id: subscription.id,
+              stripe_price_id: subscription.items.data[0].price.id,
+              current_period_end: new Date(
+                subscription.current_period_end * 1000
+              ),
+            })
+            .eq("stripe_customer_id", customerId);
+
+          break;
+        }
+
+        case "customer.subscription.updated": {
+          const subscription = event.data.object as Stripe.Subscription;
+          await supabaseAdmin
+            .from("subscriptions")
+            .update({
+              status: subscription.status,
+              stripe_price_id: subscription.items.data[0].price.id,
+              current_period_end: new Date(
+                subscription.current_period_end * 1000
+              ),
+            })
+            .eq("stripe_subscription_id", subscription.id);
+          break;
+        }
+
+        case "customer.subscription.deleted": {
+          const subscription = event.data.object as Stripe.Subscription;
+          await supabaseAdmin
+            .from("subscriptions")
+            .update({ status: "canceled" })
+            .eq("stripe_subscription_id", subscription.id);
+          break;
+        }
+
+        default:
+          throw new Error("Evento de webhook não tratado.");
+      }
+    } catch (error) {
+      console.error("Erro ao processar evento do webhook:", error);
+      return NextResponse.json(
+        { message: "Erro interno ao processar webhook" },
+        { status: 500 }
+      );
+    }
   }
 
   return NextResponse.json({ received: true });
