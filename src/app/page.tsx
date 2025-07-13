@@ -1,28 +1,33 @@
-"use client";
+// src/app/page.tsx
+// Esta página é um Componente de Servidor. A diretiva "use client" foi removida.
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, MessageCircle, Menu, X } from "lucide-react";
-import { ProjectIdeator } from "@/components/ProjectIdeator";
 import { supabase } from "@/lib/supabase";
+import { Mail, MessageCircle } from "lucide-react";
 
-// Definimos um tipo para os nossos produtos, incluindo o slug
+// Importando componentes que podem estar em arquivos separados
+import Header from "@/components/Header"; // Header é um componente de cliente
+import { ProjectIdeator } from "@/components/ProjectIdeator";
+
+// Tipo para os produtos, conforme definido em page 2.tsx
 type Product = {
   id: number;
   name: string;
   type: "saas" | "app";
   slogan: string;
   description: string;
-  logo_url: string;
-  web_link: string | null;
-  app_link: string | null;
-  slug: string | null; // Garantimos que o slug está no tipo
+  logo_url: string; // nome da coluna no Supabase
+  web_link: string | null; // nome da coluna no Supabase
+  app_link: string | null; // nome da coluna no Supabase
+  slug: string | null; // nome da coluna no Supabase
 };
 
-// --- COMPONENTES DA PÁGINA ---
+// --- COMPONENTES INTERNOS DA PÁGINA (SERVER COMPONENTS) ---
 
-const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
+const InstagramIcon = (
+  props: React.SVGProps<SVGSVGElement> // Retirado de page 2.tsx
+) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
@@ -41,103 +46,33 @@ const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const navLinks = [
-    { href: "#projetos", label: "Projetos" },
-    { href: "#ideator", label: "Gerador de Ideias" },
-    { href: "#sobre", label: "Sobre Nós" },
-  ];
+function HeroSection() {
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
-      <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
-        <Link href="/">
-          <Image
-            src="/codevibestudiologo.png"
-            alt="Logo CodeVibe Studio"
-            width={50}
-            height={50}
-            className="rounded-md"
-          />
+    <section className="bg-fundo py-24">
+      <div className="container mx-auto px-6 text-center">
+        <h2 className="text-5xl md:text-6xl font-extrabold text-texto mb-4">
+          Soluções Digitais Inovadoras
+        </h2>
+        <p className="text-xl text-texto-claro mb-8 max-w-3xl mx-auto">
+          Transformamos ideias em realidade com tecnologia de ponta, design
+          centrado no usuário e uma paixão por resolver problemas.
+        </p>
+        <Link
+          href="#projetos"
+          className="bg-primaria text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-800 transition-colors"
+        >
+          Explore Nossos Projetos
         </Link>
-
-        {/* Menu para Desktop */}
-        <div className="hidden md:flex items-center space-x-6">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-texto-claro hover:text-secundaria transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
-          {/* MUDANÇA: O link agora aponta para /login, a página do cliente */}
-          <Link
-            href="/login"
-            className="text-texto-claro font-bold hover:text-primaria transition-colors"
-          >
-            Login
-          </Link>
-          <Link
-            href="#projetos"
-            className="bg-secundaria text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors"
-          >
-            Nossas Soluções
-          </Link>
-        </div>
-
-        {/* Botão do Menu Hambúrguer */}
-        <div className="md:hidden">
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Abrir menu"
-          >
-            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-          </button>
-        </div>
-      </nav>
-
-      {/* Painel do Menu Mobile */}
-      {isMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-white shadow-lg">
-          <div className="flex flex-col items-center p-4 space-y-2">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-texto-claro hover:text-secundaria transition-colors w-full text-center py-3"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <div className="w-full border-t my-2"></div>
-            {/* MUDANÇA: O link agora aponta para /login, a página do cliente */}
-            <Link
-              href="/login"
-              className="text-texto-claro font-bold hover:text-primaria transition-colors w-full text-center py-3"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Login
-            </Link>
-            <Link
-              href="#projetos"
-              className="bg-secundaria text-white font-bold py-3 px-6 rounded-lg hover:bg-orange-600 transition-colors w-full text-center mt-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Nossas Soluções
-            </Link>
-          </div>
-        </div>
-      )}
-    </header>
+      </div>
+    </section>
   );
 }
 
+// Usando a versão mais atualizada do ProjectCard de page 2.tsx
 function ProjectCard({ project }: { project: Product }) {
   const isSaaS = project.type === "saas";
-  // CORREÇÃO AQUI: A lógica para determinar o link foi ajustada.
+
+  // Lógica para criar o link dinâmico para páginas de detalhes do produto
   const webLinkHref =
     isSaaS && project.slug ? `/produtos/${project.slug}` : project.web_link;
 
@@ -146,14 +81,16 @@ function ProjectCard({ project }: { project: Product }) {
       <div className="p-6 flex-grow">
         <div className="flex justify-between items-start mb-4">
           <Image
-            src={project.logo_url}
+            src={project.logo_url} // A propriedade é logo_url
             alt={`Logo ${project.name}`}
             width={60}
             height={60}
             className="rounded-lg object-cover"
           />
           <span
-            className={`px-3 py-1 text-xs font-bold text-white rounded-full ${isSaaS ? "bg-primaria" : "bg-green-600"}`}
+            className={`px-3 py-1 text-xs font-bold text-white rounded-full ${
+              isSaaS ? "bg-primaria" : "bg-green-600"
+            }`}
           >
             {isSaaS ? "SaaS" : "App"}
           </span>
@@ -165,6 +102,7 @@ function ProjectCard({ project }: { project: Product }) {
         <p className="text-texto-claro">{project.description}</p>
       </div>
       <div className="p-6 mt-auto bg-gray-50 border-t">
+        {/* Layout de botões aprimorado de page 2.tsx */}
         <div className="flex flex-col sm:flex-row gap-3">
           {webLinkHref && (
             <Link
@@ -197,58 +135,40 @@ function ProjectsSection({ products }: { products: Product[] }) {
   return (
     <section id="projetos" className="py-20 bg-gray-50">
       <div className="container mx-auto px-6">
-        <div className="mb-16">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-texto">
-              Softwares para Empresas (SaaS)
-            </h2>
-            <p className="text-lg text-texto-claro mt-2">
-              Soluções robustas para otimizar a gestão do seu negócio.
-            </p>
+        {saasProjects.length > 0 && (
+          <div className="mb-16">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-bold text-texto">
+                Softwares para Empresas (SaaS)
+              </h2>
+              <p className="text-lg text-texto-claro mt-2">
+                Soluções robustas para otimizar a gestão do seu negócio.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {saasProjects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {saasProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
+        )}
+        {appProjects.length > 0 && (
+          <div>
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-bold text-texto">
+                Aplicativos e Jogos
+              </h2>
+              <p className="text-lg text-texto-claro mt-2">
+                Experiências mobile criativas e envolventes.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {appProjects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </div>
           </div>
-        </div>
-        <div>
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-texto">
-              Aplicativos e Jogos
-            </h2>
-            <p className="text-lg text-texto-claro mt-2">
-              Experiências mobile criativas e envolventes.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {appProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function HeroSection() {
-  return (
-    <section className="bg-fundo py-24">
-      <div className="container mx-auto px-6 text-center">
-        <h2 className="text-5xl md:text-6xl font-extrabold text-texto mb-4">
-          Soluções Digitais Inovadoras
-        </h2>
-        <p className="text-xl text-texto-claro mb-8 max-w-3xl mx-auto">
-          Transformamos ideias em realidade com tecnologia de ponta, design
-          centrado no usuário e uma paixão por resolver problemas.
-        </p>
-        <Link
-          href="#projetos"
-          className="bg-primaria text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-800 transition-colors"
-        >
-          Explore Nossos Projetos
-        </Link>
+        )}
       </div>
     </section>
   );
@@ -272,6 +192,7 @@ function AboutSection() {
   );
 }
 
+// Usando o componente Footer completo de page 2.tsx
 function Footer() {
   const socialLinks = [
     {
@@ -323,37 +244,25 @@ function Footer() {
   );
 }
 
-export default function HomePage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+// --- PÁGINA PRINCIPAL (ASYNC SERVER COMPONENT) ---
+export default async function HomePage() {
+  // Busca de dados no servidor, como em page 1.tsx
+  const { data: products, error } = await supabase
+    .from("products")
+    .select("*")
+    .order("name", { ascending: true });
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("name", { ascending: true });
-
-      if (error) {
-        console.error("Erro ao buscar produtos:", error);
-      } else if (data) {
-        setProducts(data);
-      }
-      setIsLoading(false);
-    };
-
-    fetchProducts();
-  }, []);
+  if (error) {
+    console.error("Erro ao buscar produtos:", error.message);
+    // Em um cenário real, você poderia mostrar uma página de erro aqui
+  }
 
   return (
     <main className="bg-fundo">
       <Header />
       <HeroSection />
-      {isLoading ? (
-        <div className="text-center py-20">A carregar produtos...</div>
-      ) : (
-        <ProjectsSection products={products} />
-      )}
+      {/* Passa os produtos para o componente, usando um array vazio como fallback */}
+      <ProjectsSection products={products || []} />
       <ProjectIdeator />
       <AboutSection />
       <Footer />
