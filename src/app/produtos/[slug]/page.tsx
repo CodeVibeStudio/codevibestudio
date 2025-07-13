@@ -44,7 +44,7 @@ export default async function ProductPlansPage({ params }: Props) {
         <div className="container mx-auto px-6 text-center">
           <Link href="/">
             <Image
-              src="/codevibestudio.jpeg"
+              src="/codevibestudiologo.png"
               alt="Logo CodeVibe Studio"
               width={60}
               height={60}
