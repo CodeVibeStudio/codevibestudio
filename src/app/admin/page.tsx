@@ -1,15 +1,16 @@
 // src/app/admin/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
-import { Pencil, Trash2, Layers } from "lucide-react"; // Ícone novo
+import { Pencil, Trash2, Layers, X } from "lucide-react";
 import Link from "next/link";
 
+// --- Tipos e Dados Iniciais ---
 type Product = {
-  id?: number;
+  id: number;
   name: string;
   type: "saas" | "app";
   slogan: string;
@@ -17,10 +18,15 @@ type Product = {
   logo_url: string;
   web_link: string | null;
   app_link: string | null;
-  slug: string | null; // Adicionamos o slug
+  slug: string | null;
 };
 
-const initialFormData: Product = {
+type Notification = {
+  message: string;
+  type: "success" | "error";
+};
+
+const initialFormData: Omit<Product, "id"> = {
   name: "",
   type: "saas",
   slogan: "",
@@ -31,13 +37,86 @@ const initialFormData: Product = {
   slug: "",
 };
 
+// --- Componentes de UI Reutilizáveis ---
+
+const NotificationBanner = ({
+  notification,
+  onDismiss,
+}: {
+  notification: Notification;
+  onDismiss: () => void;
+}) => {
+  useEffect(() => {
+    const timer = setTimeout(onDismiss, 5000);
+    return () => clearTimeout(timer);
+  }, [onDismiss]);
+
+  const bgColor =
+    notification.type === "success"
+      ? "bg-green-100 border-green-500 text-green-700"
+      : "bg-red-100 border-red-500 text-red-700";
+  return (
+    <div
+      className={`p-4 border-l-4 ${bgColor} rounded-md shadow-md flex justify-between items-center mb-6`}
+    >
+      <p>{notification.message}</p>
+      <button
+        onClick={onDismiss}
+        className="p-1 rounded-full hover:bg-black/10"
+      >
+        <X size={20} />
+      </button>
+    </div>
+  );
+};
+
+const ConfirmationModal = ({
+  item,
+  onConfirm,
+  onCancel,
+}: {
+  item: Product;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) => (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
+      <h3 className="text-2xl font-bold text-gray-800">Confirmar Exclusão</h3>
+      <p className="my-4 text-gray-600">
+        Tem a certeza de que quer apagar o produto{" "}
+        <strong className="text-red-600">{item.name}</strong>? Esta ação é
+        irreversível.
+      </p>
+      <div className="flex justify-end gap-4 mt-6">
+        <button
+          onClick={onCancel}
+          className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+        >
+          Cancelar
+        </button>
+        <button
+          onClick={onConfirm}
+          className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+        >
+          Sim, Apagar
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+// --- Componente Principal da Página ---
 export default function AdminPage() {
   const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [formData, setFormData] = useState<Product>(initialFormData);
+  const [formData, setFormData] =
+    useState<Omit<Product, "id">>(initialFormData);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notification, setNotification] = useState<Notification | null>(null);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -62,17 +141,20 @@ export default function AdminPage() {
       .select("*")
       .order("name", { ascending: true });
     if (data) setProducts(data as Product[]);
+    if (error)
+      setNotification({
+        message: `Erro ao buscar produtos: ${error.message}`,
+        type: "error",
+      });
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) setLogoFile(e.target.files[0]);
   };
 
@@ -87,32 +169,45 @@ export default function AdminPage() {
     setFormData(initialFormData);
   };
 
-  const handleDelete = async (productId: number, logoUrl: string) => {
-    if (
-      window.confirm(
-        "Tem a certeza de que quer apagar este produto? Esta ação é irreversível."
-      )
-    ) {
-      if (logoUrl) {
-        const logoPath = logoUrl.split("/product-logos/")[1];
-        if (logoPath)
-          await supabase.storage.from("product-logos").remove([logoPath]);
-      }
-      const { error } = await supabase
-        .from("products")
-        .delete()
-        .eq("id", productId);
-      if (error) alert("Erro ao apagar o produto: " + error.message);
-      else {
-        alert("Produto apagado com sucesso!");
-        fetchProducts();
-      }
-    }
+  const handleDeleteClick = (product: Product) => {
+    setProductToDelete(product);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const confirmDelete = async () => {
+    if (!productToDelete) return;
+
+    if (productToDelete.logo_url) {
+      const logoPath = productToDelete.logo_url.split("/product-logos/")[1];
+      if (logoPath)
+        await supabase.storage.from("product-logos").remove([logoPath]);
+    }
+
+    const { error } = await supabase
+      .from("products")
+      .delete()
+      .eq("id", productToDelete.id);
+
+    if (error) {
+      setNotification({
+        message: `Erro ao apagar o produto: ${error.message}`,
+        type: "error",
+      });
+    } else {
+      setNotification({
+        message: "Produto apagado com sucesso!",
+        type: "success",
+      });
+      fetchProducts();
+    }
+    setProductToDelete(null);
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    let logoUrl = formData.logo_url;
+    setIsSubmitting(true);
+    setNotification(null);
+
+    let logoUrl = editingProduct?.logo_url || "";
 
     if (logoFile) {
       const filePath = `public/${Date.now()}-${logoFile.name}`;
@@ -120,7 +215,11 @@ export default function AdminPage() {
         .from("product-logos")
         .upload(filePath, logoFile);
       if (uploadError) {
-        alert("Erro ao enviar o logo: " + uploadError.message);
+        setNotification({
+          message: `Erro ao enviar o logo: ${uploadError.message}`,
+          type: "error",
+        });
+        setIsSubmitting(false);
         return;
       }
       const {
@@ -133,27 +232,34 @@ export default function AdminPage() {
 
     let error;
     if (editingProduct) {
-      const { id, ...updateData } = productData;
       const { error: updateError } = await supabase
         .from("products")
-        .update(updateData)
+        .update(productData)
         .eq("id", editingProduct.id);
       error = updateError;
     } else {
-      const { id, ...insertData } = productData;
       const { error: insertError } = await supabase
         .from("products")
-        .insert(insertData);
+        .insert(productData);
       error = insertError;
     }
 
-    if (error) alert("Erro ao salvar o produto: " + error.message);
-    else {
-      alert(`Produto ${editingProduct ? "atualizado" : "salvo"} com sucesso!`);
+    if (error) {
+      setNotification({
+        message: `Erro ao salvar o produto: ${error.message}`,
+        type: "error",
+      });
+    } else {
+      setNotification({
+        message: `Produto ${editingProduct ? "atualizado" : "salvo"} com sucesso!`,
+        type: "success",
+      });
       fetchProducts();
       handleCancelEdit();
     }
+
     setLogoFile(null);
+    setIsSubmitting(false);
   };
 
   const handleLogout = async () => {
@@ -170,16 +276,30 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
+      {productToDelete && (
+        <ConfirmationModal
+          item={productToDelete}
+          onConfirm={confirmDelete}
+          onCancel={() => setProductToDelete(null)}
+        />
+      )}
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl md:text-3xl font-bold">Painel de Gestão</h1>
           <button
             onClick={handleLogout}
-            className="bg-red-500 text-white font-bold py-2 px-4 rounded-lg"
+            className="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition"
           >
             Sair
           </button>
         </div>
+
+        {notification && (
+          <NotificationBanner
+            notification={notification}
+            onDismiss={() => setNotification(null)}
+          />
+        )}
 
         <form
           onSubmit={handleSubmit}
@@ -188,6 +308,7 @@ export default function AdminPage() {
           <h2 className="text-2xl font-semibold mb-4">
             {editingProduct ? "A Editar Produto" : "Adicionar Novo Produto"}
           </h2>
+          {/* Campos do formulário ... */}
           <input
             name="name"
             value={formData.name}
@@ -196,7 +317,6 @@ export default function AdminPage() {
             className="w-full p-2 border rounded"
             required
           />
-          {/* Adicionamos o campo slug */}
           <input
             name="slug"
             value={formData.slug ?? ""}
@@ -243,27 +363,33 @@ export default function AdminPage() {
             className="w-full p-2 border rounded"
           />
           <div>
-            <label className="block mb-2">
+            <label className="block mb-2 text-sm font-medium">
               Logo do Produto (envie apenas se quiser alterar)
             </label>
             <input
               type="file"
               onChange={handleFileChange}
               className="w-full p-2 border rounded"
+              accept="image/*"
             />
           </div>
           <div className="flex gap-4">
             <button
               type="submit"
-              className="w-full bg-primaria text-white font-bold py-3 rounded-lg"
+              disabled={isSubmitting}
+              className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
             >
-              {editingProduct ? "Atualizar Produto" : "Salvar Produto"}
+              {isSubmitting
+                ? "A salvar..."
+                : editingProduct
+                  ? "Atualizar Produto"
+                  : "Salvar Produto"}
             </button>
             {editingProduct && (
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                className="w-full bg-gray-500 text-white font-bold py-3 rounded-lg"
+                className="w-full bg-gray-500 text-white font-bold py-3 rounded-lg hover:bg-gray-600"
               >
                 Cancelar Edição
               </button>
@@ -289,7 +415,6 @@ export default function AdminPage() {
                   <p className="text-sm text-gray-600">{product.description}</p>
                 </div>
                 <div className="mt-4 pt-4 border-t flex justify-end gap-2">
-                  {/* MUDANÇA: Botão para gerir planos */}
                   <Link
                     href={`/admin/products/${product.id}`}
                     className="p-2 hover:bg-gray-200 rounded-full"
@@ -305,7 +430,7 @@ export default function AdminPage() {
                     <Pencil size={18} />
                   </button>
                   <button
-                    onClick={() => handleDelete(product.id!, product.logo_url)}
+                    onClick={() => handleDeleteClick(product)}
                     className="p-2 hover:bg-red-100 rounded-full text-red-600"
                     title="Apagar Produto"
                   >
