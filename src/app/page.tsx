@@ -64,7 +64,7 @@ function Header() {
       <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
         <Link href="/">
           <Image
-            src="/codevibestudio.jpeg"
+            src="/codevibestudiologo.png"
             alt="Logo CodeVibe Studio"
             width={50}
             height={50}
