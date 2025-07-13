@@ -1,13 +1,28 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Resolver problemas de webpack
   experimental: {
     esmExternals: false,
   },
-
-  // Configuração customizada do webpack
+  // ADICIONAMOS ESTA SEÇÃO PARA AUTORIZAR OS DOMÍNIOS DAS IMAGENS
+  images: {
+    remotePatterns: [
+      {
+        // Domínio do seu Supabase Storage
+        protocol: "https",
+        hostname: "vpkqvpzmiylfuwspccqw.supabase.co",
+        port: "",
+        pathname: "/storage/v1/object/public/product-logos/**",
+      },
+      {
+        // Domínio das imagens de placeholder
+        protocol: "https",
+        hostname: "placehold.co",
+        port: "",
+        pathname: "/**",
+      },
+    ],
+  },
   webpack: (config, { isServer }) => {
-    // Resolver problemas de módulos não encontrados
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
@@ -15,17 +30,13 @@ const nextConfig = {
       tls: false,
       crypto: false,
     };
-
     return config;
   },
-
-  // Configurações temporárias para resolver problemas
   eslint: {
     ignoreDuringBuilds: true,
   },
-
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 };
 
