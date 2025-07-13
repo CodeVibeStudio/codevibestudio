@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
+import { headers } from "next/headers"; // Importa a função headers
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
-// CORREÇÃO: Importamos a função getSupabaseAdmin
 import { getSupabaseAdmin } from "@/lib/supabase";
 
 const relevantEvents = new Set([
@@ -13,12 +12,15 @@ const relevantEvents = new Set([
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
-  const sig = headers().get("Stripe-Signature") as string;
+
+  // CORREÇÃO: Usamos 'await' para esperar que os headers sejam lidos.
+  const signature = headers().get("Stripe-Signature") as string;
+
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err: any) {
     console.error(`❌ Erro na verificação do webhook: ${err.message}`);
     return NextResponse.json(
@@ -28,7 +30,6 @@ export async function POST(req: NextRequest) {
   }
 
   if (relevantEvents.has(event.type)) {
-    // CORREÇÃO: Chamamos a função para obter o cliente de administração
     const supabaseAdmin = getSupabaseAdmin();
 
     try {
@@ -104,5 +105,3 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ received: true });
 }
-
-//Forcar atualização
