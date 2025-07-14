@@ -3,14 +3,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import Stripe from "stripe";
-import { stripe } from "@/lib/stripe";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { stripe } from "@/lib/stripe"; // Assumindo que o seu cliente stripe está em /lib
+// ** MUDANÇA CRUCIAL: Importa o novo cliente de administrador **
+import { supabaseAdmin } from "@/utils/supabase/admin";
 
-const relevantEvents = new Set([
-  "checkout.session.completed",
-  "customer.subscription.updated",
-  "customer.subscription.deleted",
-]);
+const relevantEvents = new Set(["checkout.session.completed"]);
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -35,53 +32,49 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  console.log(`[Stripe Webhook] 🔔 Evento recebido: ${event.type}`);
-  const supabaseAdmin = getSupabaseAdmin();
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as Stripe.Checkout.Session;
 
-  if (relevantEvents.has(event.type)) {
+    console.log(
+      "[Webhook] Processando checkout.session.completed:",
+      session.id
+    );
+
     try {
-      switch (event.type) {
-        case "checkout.session.completed": {
-          const session = event.data.object as Stripe.Checkout.Session;
-          const empresaId = session.client_reference_id;
+      const empresaId = session.client_reference_id;
+      if (!empresaId) throw new Error("'client_reference_id' não encontrado.");
+      if (!session.subscription)
+        throw new Error("ID da subscrição não encontrado.");
 
-          if (!empresaId)
-            throw new Error("'client_reference_id' não encontrado.");
-          if (!session.subscription)
-            throw new Error("ID da subscrição não encontrado.");
+      const subscription = await stripe.subscriptions.retrieve(
+        session.subscription as string
+      );
 
-          const subscription = await stripe.subscriptions.retrieve(
-            session.subscription as string
-          );
+      // ** USA O CLIENTE DE ADMINISTRADOR PARA FAZER O UPDATE **
+      const { error } = await supabaseAdmin
+        .from("subscriptions")
+        .update({
+          status: subscription.status,
+          stripe_subscription_id: subscription.id,
+          current_period_end: new Date(
+            subscription.current_period_end * 1000
+          ).toISOString(),
+        })
+        .eq("empresa_id", empresaId);
 
-          const { error } = await supabaseAdmin
-            .from("subscriptions")
-            .update({
-              status: subscription.status,
-              stripe_subscription_id: subscription.id,
-              current_period_end: new Date(
-                subscription.current_period_end * 1000
-              ),
-            })
-            .eq("empresa_id", empresaId);
-
-          if (error) {
-            console.error(
-              `[Stripe Webhook] ❌ ERRO no Supabase ao atualizar subscrição para empresa ${empresaId}:`,
-              error
-            );
-            throw new Error(`Falha ao atualizar no Supabase: ${error.message}`);
-          }
-
-          console.log(
-            `[Stripe Webhook] ✅ SUCESSO: Subscrição para empresa ${empresaId} atualizada para ${subscription.status}`
-          );
-          break;
-        }
-        // ... outros casos
+      if (error) {
+        console.error(
+          `[Webhook] ❌ ERRO no Supabase ao atualizar subscrição para empresa ${empresaId}:`,
+          error
+        );
+        throw new Error(`Falha ao atualizar no Supabase: ${error.message}`);
       }
+
+      console.log(
+        `[Webhook] ✅ SUCESSO: Subscrição para empresa ${empresaId} atualizada para ${subscription.status}`
+      );
     } catch (error) {
-      console.error("[Stripe Webhook] Erro final no processamento:", error);
+      console.error("[Webhook] Erro final no processamento:", error);
       return NextResponse.json(
         { message: "Erro interno no processamento." },
         { status: 200 }
