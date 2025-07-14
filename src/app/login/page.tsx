@@ -3,16 +3,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-// Corrigido para importar do cliente centralizado, se o tiver criado
-import { supabase } from "@/lib/supabase/client";
+// ** MUDANÇA: Importa a função que cria o cliente **
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
 export default function LoginPage() {
+  const router = useRouter();
+  // ** MUDANÇA: Cria o cliente dentro do componente **
+  const supabase = createClient();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,11 +31,7 @@ export default function LoginPage() {
 
     if (error) {
       setError("E-mail ou senha inválidos.");
-      console.error("Erro de login:", error.message);
     } else {
-      // ** MELHORIA: router.refresh() **
-      // Garante que o layout do servidor é re-renderizado com o novo estado de autenticação
-      // antes de navegar para o painel de controlo.
       router.refresh();
       router.push("/dashboard");
     }
