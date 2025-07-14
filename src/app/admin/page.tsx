@@ -3,12 +3,13 @@
 
 import { useEffect, useState, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+// ** MUDANÇA: Importa a função para criar o cliente do browser, como em page 1.tsx **
+import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Pencil, Trash2, Layers, X } from "lucide-react";
 import Link from "next/link";
 
-// --- Tipos e Dados Iniciais ---
+// --- Tipos e Dados Iniciais (Mantidos de page 2.tsx) ---
 type Product = {
   id: number;
   name: string;
@@ -37,7 +38,7 @@ const initialFormData: Omit<Product, "id"> = {
   slug: "",
 };
 
-// --- Componentes de UI Reutilizáveis ---
+// --- Componentes de UI Reutilizáveis (Mantidos de page 2.tsx) ---
 
 const NotificationBanner = ({
   notification,
@@ -107,6 +108,11 @@ const ConfirmationModal = ({
 
 // --- Componente Principal da Página ---
 export default function AdminPage() {
+  // ** MUDANÇA: Cria a instância do cliente Supabase aqui, como em page 1.tsx **
+  const supabase = createClient();
+  const router = useRouter();
+
+  // Estados do componente (Mantidos de page 2.tsx)
   const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [formData, setFormData] =
@@ -117,15 +123,18 @@ export default function AdminPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<Notification | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     const checkUser = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (!session) {
-        router.push("/login");
+      // ** MUDANÇA: Lógica de verificação de admin e redirecionamento de page 1.tsx **
+      if (
+        !session ||
+        session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
+      ) {
+        router.push("/admin/login");
       } else {
         setUser(session.user);
         fetchProducts();
@@ -133,8 +142,9 @@ export default function AdminPage() {
       }
     };
     checkUser();
-  }, [router]);
+  }, [router, supabase]); // Dependências atualizadas como em page 1.tsx
 
+  // Funções de manipulação de dados (Mantidas de page 2.tsx)
   const fetchProducts = async () => {
     const { data, error } = await supabase
       .from("products")
@@ -173,6 +183,7 @@ export default function AdminPage() {
     setProductToDelete(product);
   };
 
+  // Lógica de exclusão completa (Mantida de page 2.tsx)
   const confirmDelete = async () => {
     if (!productToDelete) return;
 
@@ -202,6 +213,7 @@ export default function AdminPage() {
     setProductToDelete(null);
   };
 
+  // Lógica de submissão do formulário completa (Mantida de page 2.tsx)
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -251,7 +263,9 @@ export default function AdminPage() {
       });
     } else {
       setNotification({
-        message: `Produto ${editingProduct ? "atualizado" : "salvo"} com sucesso!`,
+        message: `Produto ${
+          editingProduct ? "atualizado" : "salvo"
+        } com sucesso!`,
         type: "success",
       });
       fetchProducts();
@@ -264,7 +278,8 @@ export default function AdminPage() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push("/login");
+    // ** MUDANÇA: Redireciona para /admin/login como em page 1.tsx **
+    router.push("/admin/login");
   };
 
   if (loading)
@@ -274,6 +289,7 @@ export default function AdminPage() {
       </div>
     );
 
+  // Todo o JSX da página (Mantido de page 2.tsx)
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
       {productToDelete && (
@@ -308,7 +324,6 @@ export default function AdminPage() {
           <h2 className="text-2xl font-semibold mb-4">
             {editingProduct ? "A Editar Produto" : "Adicionar Novo Produto"}
           </h2>
-          {/* Campos do formulário ... */}
           <input
             name="name"
             value={formData.name}
