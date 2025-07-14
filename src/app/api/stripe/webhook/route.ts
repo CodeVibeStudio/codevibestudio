@@ -14,14 +14,11 @@ const relevantEvents = new Set([
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
-  const headersList = headers();
-  const signature = headersList.get("Stripe-Signature") as string;
+  const signature = headers().get("Stripe-Signature") as string;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
-    console.error(
-      "❌ A variável de ambiente STRIPE_WEBHOOK_SECRET não está definida no servidor."
-    );
+    console.error("❌ STRIPE_WEBHOOK_SECRET não está configurado.");
     return NextResponse.json(
       { error: "Configuração do servidor incorreta." },
       { status: 500 }
@@ -29,13 +26,9 @@ export async function POST(req: NextRequest) {
   }
 
   let event: Stripe.Event;
-
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err: any) {
-    console.error(
-      `❌ Erro na verificação da assinatura do webhook: ${err.message}`
-    );
     return NextResponse.json(
       { error: `Webhook Error: ${err.message}` },
       { status: 400 }
@@ -52,28 +45,20 @@ export async function POST(req: NextRequest) {
           const session = event.data.object as Stripe.Checkout.Session;
           const empresaId = session.client_reference_id;
 
-          if (!empresaId) {
-            throw new Error("'client_reference_id' não encontrado na sessão.");
-          }
-          if (!session.subscription) {
-            throw new Error(
-              "ID da subscrição do Stripe não encontrado na sessão."
-            );
-          }
+          if (!empresaId)
+            throw new Error("'client_reference_id' não encontrado.");
+          if (!session.subscription)
+            throw new Error("ID da subscrição não encontrado.");
 
           const subscription = await stripe.subscriptions.retrieve(
             session.subscription as string
           );
 
-          // ** CORREÇÃO FINAL: Apenas atualizamos os campos necessários **
-          // O stripe_price_id já foi guardado na API de registo.
           const { error } = await supabaseAdmin
             .from("subscriptions")
             .update({
               status: subscription.status,
               stripe_subscription_id: subscription.id,
-              // A linha abaixo foi removida, pois causava o erro e não é mais necessária aqui.
-              // stripe_price_id: subscription.items.data[0].price.id,
               current_period_end: new Date(
                 subscription.current_period_end * 1000
               ),
@@ -82,12 +67,10 @@ export async function POST(req: NextRequest) {
 
           if (error) {
             console.error(
-              `[Stripe Webhook] ❌ ERRO no Supabase ao atualizar a subscrição para a empresa ${empresaId}:`,
+              `[Stripe Webhook] ❌ ERRO no Supabase ao atualizar subscrição para empresa ${empresaId}:`,
               error
             );
-            throw new Error(
-              `Falha ao atualizar a subscrição no Supabase: ${error.message}`
-            );
+            throw new Error(`Falha ao atualizar no Supabase: ${error.message}`);
           }
 
           console.log(
@@ -95,19 +78,12 @@ export async function POST(req: NextRequest) {
           );
           break;
         }
-
-        // ... outros casos de evento
+        // ... outros casos
       }
     } catch (error) {
-      console.error(
-        "[Stripe Webhook] Erro final no processamento do webhook:",
-        error
-      );
+      console.error("[Stripe Webhook] Erro final no processamento:", error);
       return NextResponse.json(
-        {
-          message:
-            "Webhook recebido, mas ocorreu um erro interno no processamento.",
-        },
+        { message: "Erro interno no processamento." },
         { status: 200 }
       );
     }

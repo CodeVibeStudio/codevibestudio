@@ -3,14 +3,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-// IMPORTANTE: Este pacote precisa de ser instalado.
-// Execute no terminal: npm install @supabase/auth-helpers-nextjs
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+// ** CORREÇÃO: Importa o cliente centralizado **
+import { supabase } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import Image from "next/image";
 
-// --- Tipos de Dados ---
 type Product = {
   id: number;
   name: string;
@@ -25,11 +23,9 @@ type SubscriptionWithProduct = {
   products: Product | null;
 };
 
-// --- Componente Principal da Página ---
 export default function DashboardPage() {
   const router = useRouter();
-  // Cria um cliente Supabase específico para Componentes de Cliente
-  const supabase = createClientComponentClient();
+  // O cliente Supabase já não é criado aqui.
 
   const [user, setUser] = useState<User | null>(null);
   const [subscriptions, setSubscriptions] = useState<SubscriptionWithProduct[]>(
@@ -43,40 +39,24 @@ export default function DashboardPage() {
       try {
         const {
           data: { session },
-          error: sessionError,
         } = await supabase.auth.getSession();
-
-        if (sessionError || !session) {
+        if (!session) {
           router.push("/login");
           return;
         }
         setUser(session.user);
 
-        console.log("A procurar empresa para o utilizador:", session.user.id);
         const { data: empresaData, error: empresaError } = await supabase
           .from("empresas")
           .select("id")
           .eq("owner_id", session.user.id)
           .single();
 
-        if (empresaError) {
-          console.error("Erro do Supabase ao buscar empresa:", empresaError);
+        if (empresaError || !empresaData) {
           throw new Error(
-            `Falha ao carregar dados da empresa. Verifique as políticas de RLS. (Código: ${empresaError.code})`
+            "Não foi possível encontrar uma empresa associada a este utilizador. Verifique as políticas de RLS."
           );
         }
-
-        if (!empresaData) {
-          console.error(
-            "Nenhuma empresa encontrada para o utilizador:",
-            session.user.id
-          );
-          throw new Error(
-            "Não foi possível encontrar uma empresa associada a este utilizador."
-          );
-        }
-
-        console.log("Empresa encontrada:", empresaData.id);
 
         const { data: subsData, error: subsError } = await supabase
           .from("subscriptions")
@@ -86,17 +66,10 @@ export default function DashboardPage() {
           .eq("empresa_id", empresaData.id)
           .in("status", ["active", "trialing"]);
 
-        if (subsError) {
-          console.error("Erro do Supabase ao buscar subscrições:", subsError);
-          throw new Error(
-            `Falha ao carregar os seus dados de subscrição. (Código: ${subsError.code})`
-          );
-        }
+        if (subsError) throw subsError;
 
-        console.log("Subscrições encontradas:", subsData);
         setSubscriptions(subsData as SubscriptionWithProduct[]);
       } catch (e: any) {
-        console.error("Erro final no carregamento do painel:", e);
         setError(e.message);
       } finally {
         setLoading(false);
@@ -104,7 +77,7 @@ export default function DashboardPage() {
     };
 
     fetchUserData();
-  }, [router, supabase]);
+  }, [router]); // Removido 'supabase' das dependências pois agora é um módulo estático
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -139,22 +112,14 @@ export default function DashboardPage() {
           )}
         </nav>
       </header>
-
       <main className="container mx-auto px-6 py-12">
         <h2 className="mb-8 text-3xl font-bold text-gray-800">
           Meus Produtos Ativos
         </h2>
-
-        {error && (
-          <div className="rounded-md bg-red-100 p-4 text-center">
-            <p className="font-bold text-red-700">Ocorreu um Erro</p>
-            <p className="text-red-600">{error}</p>
-          </div>
-        )}
-
+        {error && <p className="text-red-500">{error}</p>}
         {!error && subscriptions.length > 0 ? (
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {/* ... o seu código para renderizar os cartões de subscrição ... */}
+            {/* Renderização dos produtos */}
           </div>
         ) : (
           !error && (
