@@ -1,15 +1,18 @@
 // src/app/page.tsx
-"use client"; // SOLUÇÃO: Transforma este arquivo em um módulo de Client Component.
+// Esta página é um Componente de Servidor, garantindo performance e evitando erros de hidratação.
 
-import { useState, useEffect } from "react"; // Hooks para estado e efeitos
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import Header from "@/components/Header"; // Supondo que você tenha este componente
-import { ProjectIdeator } from "@/components/ProjectIdeator"; // Supondo que você tenha este componente
-import { Mail, MessageCircle, LoaderCircle } from "lucide-react";
+import Header from "@/components/Header";
+import { ProjectIdeator } from "@/components/ProjectIdeator";
+import { Mail, MessageCircle } from "lucide-react";
+import ClientImage from "@/components/ClientImage"; // A solução para o erro de hidratação.
 
-// --- DEFINIÇÃO DE TIPOS ---
+// Garante que a página seja sempre renderizada dinamicamente no servidor a cada requisição.
+export const dynamic = "force-dynamic";
+
+// --- Tipos de Dados ---
 type Product = {
   id: number;
   name: string;
@@ -22,7 +25,7 @@ type Product = {
   slug: string | null;
 };
 
-// --- COMPONENTES DA PÁGINA (sem alterações na lógica interna) ---
+// --- Componentes ---
 
 function HeroSection() {
   return (
@@ -55,21 +58,17 @@ function ProjectCard({ project }: { project: Product }) {
     <div className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 flex flex-col h-full">
       <div className="p-6 flex-grow">
         <div className="flex justify-between items-start mb-4">
-          {/* O onError agora funciona porque este é um Client Component */}
-          <Image
+          {/* Usamos o nosso novo Client Component para a imagem */}
+          <ClientImage
             src={project.logo_url}
             alt={`Logo ${project.name}`}
             width={60}
             height={60}
-            className="rounded-lg object-cover border border-gray-200"
-            onError={(e) => {
-              e.currentTarget.src = `https://placehold.co/60x60/e2e8f0/4a5568?text=${project.name.charAt(0)}`;
-            }}
+            className="rounded-lg object-cover"
+            fallbackText={project.name.charAt(0)}
           />
           <span
-            className={`px-3 py-1 text-xs font-bold text-white rounded-full ${
-              isSaaS ? "bg-blue-600" : "bg-green-600"
-            }`}
+            className={`px-3 py-1 text-xs font-bold text-white rounded-full ${isSaaS ? "bg-blue-600" : "bg-green-600"}`}
           >
             {isSaaS ? "SaaS" : "App"}
           </span>
@@ -105,67 +104,8 @@ function ProjectCard({ project }: { project: Product }) {
   );
 }
 
-function ProjectsSection({ products }: { products: Product[] }) {
-  if (!products || products.length === 0) {
-    return (
-      <section id="projetos" className="py-20 bg-gray-100">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            Nossos Projetos
-          </h2>
-          <p className="text-gray-600">
-            Nenhum projeto encontrado. Volte em breve!
-          </p>
-        </div>
-      </section>
-    );
-  }
-  const saasProjects = products.filter((p) => p.type === "saas");
-  const appProjects = products.filter((p) => p.type === "app");
-  return (
-    <section id="projetos" className="py-20 bg-gray-100">
-      <div className="container mx-auto px-6">
-        {saasProjects.length > 0 && (
-          <div className="mb-16">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold text-gray-800">
-                Softwares para Empresas (SaaS)
-              </h2>
-              <p className="text-lg text-gray-600 mt-2">
-                Soluções robustas para otimizar a gestão do seu negócio.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {saasProjects.map((p) => (
-                <ProjectCard key={p.id} project={p} />
-              ))}
-            </div>
-          </div>
-        )}
-        {appProjects.length > 0 && (
-          <div>
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold text-gray-800">
-                Aplicativos e Jogos
-              </h2>
-              <p className="text-lg text-gray-600 mt-2">
-                Experiências mobile criativas e envolventes.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {appProjects.map((p) => (
-                <ProjectCard key={p.id} project={p} />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
 function AboutSection() {
-  /* ...código inalterado... */ return (
+  return (
     <section id="sobre" className="bg-white py-20">
       <div className="container mx-auto px-6 text-center">
         <h3 className="text-4xl font-bold text-gray-800 mb-4">
@@ -200,7 +140,7 @@ const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 function Footer() {
-  /* ...código inalterado... */ const socialLinks = [
+  const socialLinks = [
     {
       icon: MessageCircle,
       href: "https://wa.me/5532998111973",
@@ -250,59 +190,16 @@ function Footer() {
   );
 }
 
-// --- COMPONENTE PRINCIPAL DA PÁGINA ---
-export default function HomePage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// --- Página Principal ---
+export default async function HomePage() {
+  const { data: products, error } = await supabase
+    .from("products")
+    .select("*")
+    .order("name", { ascending: true });
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const { data, error: supabaseError } = await supabase
-          .from("products")
-          .select("*")
-          .order("name", { ascending: true });
-
-        if (supabaseError) {
-          // Se o Supabase retornar um erro, ele será capturado aqui.
-          throw new Error(
-            `Falha na consulta ao Supabase: ${supabaseError.message}`
-          );
-        }
-        setProducts(data || []);
-      } catch (e) {
-        if (e instanceof Error) {
-          console.error("Erro detalhado ao buscar produtos:", e.message);
-          setError(e.message);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, []); // O array vazio [] garante que a busca ocorra apenas uma vez.
-
-  // Estado de Carregamento
-  if (loading) {
-    return (
-      <main className="bg-gray-100 flex flex-col min-h-screen">
-        <Header />
-        <div className="flex-grow flex items-center justify-center">
-          <div className="text-center">
-            <LoaderCircle className="mx-auto h-12 w-12 animate-spin text-blue-600" />
-            <h2 className="mt-4 text-2xl font-bold text-gray-700">
-              Carregando projetos...
-            </h2>
-          </div>
-        </div>
-        <Footer />
-      </main>
-    );
-  }
-
-  // Estado de Erro
   if (error) {
+    console.error("Erro ao buscar produtos:", error.message);
+    // Exibindo uma UI de erro no servidor, similar à de page 2
     return (
       <main className="bg-gray-100">
         <Header />
@@ -314,7 +211,7 @@ export default function HomePage() {
             Não foi possível carregar os projetos no momento.
           </p>
           <p className="mt-4 p-2 bg-red-100 text-red-700 text-xs rounded">
-            Detalhe do erro: {error}
+            Detalhe do erro: {error.message}
           </p>
         </div>
         <Footer />
@@ -322,12 +219,64 @@ export default function HomePage() {
     );
   }
 
-  // Estado de Sucesso
+  const saasProjects = products?.filter((p) => p.type === "saas") || [];
+  const appProjects = products?.filter((p) => p.type === "app") || [];
+
   return (
     <main className="bg-gray-100">
       <Header />
       <HeroSection />
-      <ProjectsSection products={products} />
+      <section id="projetos" className="py-20 bg-gray-100">
+        <div className="container mx-auto px-6">
+          {saasProjects.length === 0 && appProjects.length === 0 ? (
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                Nossos Projetos
+              </h2>
+              <p className="text-gray-600">
+                Nenhum projeto encontrado. Volte em breve!
+              </p>
+            </div>
+          ) : (
+            <>
+              {saasProjects.length > 0 && (
+                <div className="mb-16">
+                  <div className="text-center mb-12">
+                    <h2 className="text-4xl font-bold text-gray-800">
+                      Softwares para Empresas (SaaS)
+                    </h2>
+                    <p className="text-lg text-gray-600 mt-2">
+                      Soluções robustas para otimizar a gestão do seu negócio.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {saasProjects.map((p) => (
+                      <ProjectCard key={p.id} project={p} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {appProjects.length > 0 && (
+                <div>
+                  <div className="text-center mb-12">
+                    <h2 className="text-4xl font-bold text-gray-800">
+                      Aplicativos e Jogos
+                    </h2>
+                    <p className="text-lg text-gray-600 mt-2">
+                      Experiências mobile criativas e envolventes.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {appProjects.map((p) => (
+                      <ProjectCard key={p.id} project={p} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </section>
       <ProjectIdeator />
       <AboutSection />
       <Footer />
