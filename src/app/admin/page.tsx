@@ -9,7 +9,7 @@ import { User } from "@supabase/supabase-js";
 import { Pencil, Trash2, Layers, X } from "lucide-react";
 import Link from "next/link";
 
-// --- Tipos e Dados Iniciais (Mantidos de page 2.tsx) ---
+// --- Tipos e Dados Iniciais (Mantidos de page 2.tsx) Depois podemos apagar---
 type Product = {
   id: number;
   name: string;
