@@ -3,8 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import Stripe from "stripe";
-import { stripe } from "@/lib/stripe"; // Assumindo que o seu cliente stripe está em /lib
-// ** MUDANÇA CRUCIAL: Importa o novo cliente de administrador **
+import { stripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/utils/supabase/admin";
 
 const relevantEvents = new Set(["checkout.session.completed"]);
@@ -15,7 +14,6 @@ export async function POST(req: NextRequest) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
-    console.error("❌ STRIPE_WEBHOOK_SECRET não está configurado.");
     return NextResponse.json(
       { error: "Configuração do servidor incorreta." },
       { status: 500 }
@@ -34,24 +32,31 @@ export async function POST(req: NextRequest) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-
-    console.log(
-      "[Webhook] Processando checkout.session.completed:",
-      session.id
-    );
+    console.log("[Webhook] Iniciando processamento para sessão:", session.id);
 
     try {
+      // Log de diagnóstico para a variável de ambiente mais crítica
+      if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        console.error(
+          "[Webhook] ERRO CRÍTICO: A variável de ambiente SUPABASE_SERVICE_ROLE_KEY não foi encontrada no ambiente da Vercel."
+        );
+        throw new Error(
+          "Configuração de servidor incompleta: Chave de serviço em falta."
+        );
+      }
+      console.log(
+        "[Webhook] Chave de serviço do Supabase encontrada. A tentar a atualização..."
+      );
+
       const empresaId = session.client_reference_id;
       if (!empresaId) throw new Error("'client_reference_id' não encontrado.");
-      if (!session.subscription)
-        throw new Error("ID da subscrição não encontrado.");
 
       const subscription = await stripe.subscriptions.retrieve(
         session.subscription as string
       );
 
-      // ** USA O CLIENTE DE ADMINISTRADOR PARA FAZER O UPDATE **
-      const { error } = await supabaseAdmin
+      // Adicionamos .select() para obter um feedback mais detalhado da operação
+      const { data, error } = await supabaseAdmin
         .from("subscriptions")
         .update({
           status: subscription.status,
@@ -60,14 +65,22 @@ export async function POST(req: NextRequest) {
             subscription.current_period_end * 1000
           ).toISOString(),
         })
-        .eq("empresa_id", empresaId);
+        .eq("empresa_id", empresaId)
+        .select(); // .select() ajuda a confirmar que a linha foi encontrada e atualizada
 
       if (error) {
+        // Log do erro completo do Supabase para máxima clareza
         console.error(
-          `[Webhook] ❌ ERRO no Supabase ao atualizar subscrição para empresa ${empresaId}:`,
-          error
+          `[Webhook] ERRO COMPLETO DO SUPABASE para empresa ${empresaId}:`,
+          JSON.stringify(error, null, 2)
         );
         throw new Error(`Falha ao atualizar no Supabase: ${error.message}`);
+      }
+
+      if (!data || data.length === 0) {
+        console.warn(
+          `[Webhook] AVISO: A atualização foi executada sem erros, mas nenhuma linha foi modificada para a empresa ${empresaId}. Verifique se o empresa_id corresponde a uma subscrição 'incomplete'.`
+        );
       }
 
       console.log(
