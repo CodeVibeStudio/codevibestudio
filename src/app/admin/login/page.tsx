@@ -3,10 +3,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+// Importa a função correta da nova estrutura
 import { createClient } from "@/utils/supabase/client";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  // Cria o cliente dentro do componente
   const supabase = createClient();
 
   const [email, setEmail] = useState("");
@@ -20,7 +22,7 @@ export default function AdminLoginPage() {
     setError("");
 
     if (email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
-      setError("Acesso negado.");
+      setError("Acesso negado. Este não é o e-mail do administrador.");
       setLoading(false);
       return;
     }
@@ -33,10 +35,13 @@ export default function AdminLoginPage() {
     setLoading(false);
 
     if (error) {
-      setError("E-mail ou senha de administrador inválidos.");
+      setError(
+        error.message === "Invalid login credentials"
+          ? "E-mail ou senha de administrador inválidos."
+          : error.message
+      );
     } else {
       router.refresh();
-      // ** MUDANÇA: Redireciona para /admin **
       router.push("/admin");
     }
   };

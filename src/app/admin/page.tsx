@@ -240,16 +240,24 @@ export default function AdminPage() {
       logoUrl = publicUrl;
     }
 
-    const productData = { ...formData, logo_url: logoUrl };
+    // ** CORREÇÃO PASSO 1: **
+    // Esta linha está correta. Ela separa o 'id' do resto dos dados.
+    const { id, ...dataToSave } = formData as Product;
+
+    // ** CORREÇÃO PASSO 2: **
+    // Usamos 'dataToSave' (que não tem o 'id') em vez de 'formData'.
+    const productData = { ...dataToSave, logo_url: logoUrl };
 
     let error;
     if (editingProduct) {
+      // Agora 'productData' não contém o 'id', e a atualização funcionará.
       const { error: updateError } = await supabase
         .from("products")
         .update(productData)
         .eq("id", editingProduct.id);
       error = updateError;
     } else {
+      // Para a inserção, isto também funciona, pois 'productData' não tem 'id'.
       const { error: insertError } = await supabase
         .from("products")
         .insert(productData);
