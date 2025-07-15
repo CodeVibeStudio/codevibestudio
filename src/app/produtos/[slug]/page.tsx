@@ -1,5 +1,5 @@
 // src/app/produtos/[slug]/page.tsx
-
+import OrcamentoButton from "@/components/OrcamentoButton";
 import { supabase } from "@/lib/supabase";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -87,7 +87,7 @@ function PlanCard({ plan, productSlug }: { plan: Plan; productSlug: string }) {
 const getProductData = async (slug: string) => {
   const { data: product, error } = await supabase
     .from("products")
-    .select("*")
+    .select("id, name, slogan, description, logo_url, contact_form")
     .eq("slug", slug)
     .single();
   if (error || !product) notFound();
@@ -114,7 +114,9 @@ export default async function ProductPage({
       <main className="container mx-auto px-6 py-16">
         <section className="text-center mb-16">
           <Image
-            src={product.logo_url}
+            src={
+              product.logo_url || "https://placehold.co/64x64/eee/ccc?text=Logo"
+            }
             alt={`Logo ${product.name}`}
             width={100}
             height={100}
@@ -127,6 +129,10 @@ export default async function ProductPage({
           <p className="max-w-3xl mx-auto text-lg text-gray-700 mt-4">
             {product.description}
           </p>
+
+          {product.contact_form && (
+            <OrcamentoButton productName={product.name} />
+          )}
         </section>
 
         {plans.length > 0 && (

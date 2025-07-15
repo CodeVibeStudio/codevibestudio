@@ -3,13 +3,12 @@
 
 import { useEffect, useState, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-// ** MUDANÇA: Importa a função para criar o cliente do browser, como em page 1.tsx **
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Pencil, Trash2, Layers, X } from "lucide-react";
 import Link from "next/link";
 
-// --- Tipos e Dados Iniciais (Mantidos de page 2.tsx) Depois podemos apagar---
+// --- Tipos e Dados Iniciais ---
 type Product = {
   id: number;
   name: string;
@@ -20,6 +19,8 @@ type Product = {
   web_link: string | null;
   app_link: string | null;
   slug: string | null;
+  send_email: string | null;
+  contact_form: boolean;
 };
 
 type Notification = {
@@ -36,9 +37,11 @@ const initialFormData: Omit<Product, "id"> = {
   web_link: "",
   app_link: "",
   slug: "",
+  send_email: "",
+  contact_form: false,
 };
 
-// --- Componentes de UI Reutilizáveis (Mantidos de page 2.tsx) ---
+// --- Componentes de UI Reutilizáveis (sem alterações) ---
 
 const NotificationBanner = ({
   notification,
@@ -108,15 +111,15 @@ const ConfirmationModal = ({
 
 // --- Componente Principal da Página ---
 export default function AdminPage() {
-  // ** MUDANÇA: Cria a instância do cliente Supabase aqui, como em page 1.tsx **
   const supabase = createClient();
   const router = useRouter();
 
-  // Estados do componente (Mantidos de page 2.tsx)
+  // Estados do componente
   const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [formData, setFormData] =
-    useState<Omit<Product, "id">>(initialFormData);
+  const [formData, setFormData] = useState<Omit<Product, "id"> | Product>(
+    initialFormData
+  );
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
@@ -129,7 +132,6 @@ export default function AdminPage() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      // ** MUDANÇA: Lógica de verificação de admin e redirecionamento de page 1.tsx **
       if (
         !session ||
         session.user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL
@@ -142,9 +144,8 @@ export default function AdminPage() {
       }
     };
     checkUser();
-  }, [router, supabase]); // Dependências atualizadas como em page 1.tsx
+  }, [router, supabase]);
 
-  // Funções de manipulação de dados (Mantidas de page 2.tsx)
   const fetchProducts = async () => {
     const { data, error } = await supabase
       .from("products")
@@ -161,7 +162,13 @@ export default function AdminPage() {
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type } = e.target;
+    const isCheckbox = type === "checkbox";
+    // @ts-ignore
+    setFormData((prev) => ({
+      ...prev,
+      [name]: isCheckbox ? (e.target as HTMLInputElement).checked : value,
+    }));
   };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -183,21 +190,17 @@ export default function AdminPage() {
     setProductToDelete(product);
   };
 
-  // Lógica de exclusão completa (Mantida de page 2.tsx)
   const confirmDelete = async () => {
     if (!productToDelete) return;
-
     if (productToDelete.logo_url) {
       const logoPath = productToDelete.logo_url.split("/product-logos/")[1];
       if (logoPath)
         await supabase.storage.from("product-logos").remove([logoPath]);
     }
-
     const { error } = await supabase
       .from("products")
       .delete()
       .eq("id", productToDelete.id);
-
     if (error) {
       setNotification({
         message: `Erro ao apagar o produto: ${error.message}`,
@@ -213,16 +216,28 @@ export default function AdminPage() {
     setProductToDelete(null);
   };
 
-  // Lógica de submissão do formulário completa (Mantida de page 2.tsx)
+  const sanitizeFilename = (filename: string): string => {
+    const withoutDiacritics = filename
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    const sanitized = withoutDiacritics
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-.]/g, "");
+    return sanitized;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setNotification(null);
 
-    let logoUrl = editingProduct?.logo_url || "";
+    let logoUrl = "logo_url" in formData ? formData.logo_url : "";
 
     if (logoFile) {
-      const filePath = `public/${Date.now()}-${logoFile.name}`;
+      const sanitizedName = sanitizeFilename(logoFile.name);
+      const filePath = `public/${Date.now()}-${sanitizedName}`;
+
       const { error: uploadError } = await supabase.storage
         .from("product-logos")
         .upload(filePath, logoFile);
@@ -240,24 +255,17 @@ export default function AdminPage() {
       logoUrl = publicUrl;
     }
 
-    // ** CORREÇÃO PASSO 1: **
-    // Esta linha está correta. Ela separa o 'id' do resto dos dados.
     const { id, ...dataToSave } = formData as Product;
-
-    // ** CORREÇÃO PASSO 2: **
-    // Usamos 'dataToSave' (que não tem o 'id') em vez de 'formData'.
     const productData = { ...dataToSave, logo_url: logoUrl };
 
     let error;
     if (editingProduct) {
-      // Agora 'productData' não contém o 'id', e a atualização funcionará.
       const { error: updateError } = await supabase
         .from("products")
         .update(productData)
         .eq("id", editingProduct.id);
       error = updateError;
     } else {
-      // Para a inserção, isto também funciona, pois 'productData' não tem 'id'.
       const { error: insertError } = await supabase
         .from("products")
         .insert(productData);
@@ -286,7 +294,6 @@ export default function AdminPage() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    // ** MUDANÇA: Redireciona para /admin/login como em page 1.tsx **
     router.push("/admin/login");
   };
 
@@ -297,7 +304,6 @@ export default function AdminPage() {
       </div>
     );
 
-  // Todo o JSX da página (Mantido de page 2.tsx)
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
       {productToDelete && (
@@ -317,14 +323,12 @@ export default function AdminPage() {
             Sair
           </button>
         </div>
-
         {notification && (
           <NotificationBanner
             notification={notification}
             onDismiss={() => setNotification(null)}
           />
         )}
-
         <form
           onSubmit={handleSubmit}
           className="bg-white p-6 rounded-lg shadow-md mb-8 space-y-4"
@@ -342,7 +346,7 @@ export default function AdminPage() {
           />
           <input
             name="slug"
-            value={formData.slug ?? ""}
+            value={"slug" in formData ? (formData.slug ?? "") : ""}
             onChange={handleInputChange}
             placeholder="Slug para URL (ex: rescuenow)"
             className="w-full p-2 border rounded"
@@ -373,18 +377,49 @@ export default function AdminPage() {
           </select>
           <input
             name="web_link"
-            value={formData.web_link ?? ""}
+            value={"web_link" in formData ? (formData.web_link ?? "") : ""}
             onChange={handleInputChange}
             placeholder="Link da Web"
             className="w-full p-2 border rounded"
           />
           <input
+            name="send_email"
+            value={"send_email" in formData ? (formData.send_email ?? "") : ""}
+            onChange={handleInputChange}
+            placeholder="E-mail para receber notificações"
+            className="w-full p-2 border rounded"
+          />
+          <input
             name="app_link"
-            value={formData.app_link ?? ""}
+            value={"app_link" in formData ? (formData.app_link ?? "") : ""}
             onChange={handleInputChange}
             placeholder="Link do App"
             className="w-full p-2 border rounded"
           />
+
+          <div className="border-t pt-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                name="contact_form"
+                checked={
+                  "contact_form" in formData ? formData.contact_form : false
+                }
+                onChange={handleInputChange}
+                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              {/* **MUDANÇA:** Estilo do texto atualizado para corresponder ao page 1.tsx */}
+              <span className="font-medium text-gray-700">
+                Habilitar formulário de orçamento para este produto
+              </span>
+            </label>
+            {/* **MUDANÇA:** Estilo do parágrafo atualizado para corresponder ao page 1.tsx */}
+            <p className="text-xs text-gray-500 mt-1 ml-8">
+              Marque esta opção se o produto não tiver planos e necessitar de um
+              contacto para orçamento (ex: Landing Pages).
+            </p>
+          </div>
+
           <div>
             <label className="block mb-2 text-sm font-medium">
               Logo do Produto (envie apenas se quiser alterar)
@@ -419,7 +454,6 @@ export default function AdminPage() {
             )}
           </div>
         </form>
-
         <div>
           <h2 className="text-2xl font-semibold mb-4">Produtos Existentes</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -430,12 +464,20 @@ export default function AdminPage() {
               >
                 <div className="flex-grow">
                   <img
-                    src={product.logo_url}
+                    src={
+                      product.logo_url ||
+                      "https://placehold.com/64x64/eee/ccc?text=Logo"
+                    }
                     alt={product.name}
                     className="w-16 h-16 rounded-md mb-4 object-cover"
                   />
                   <h3 className="font-bold text-xl">{product.name}</h3>
                   <p className="text-sm text-gray-600">{product.description}</p>
+                  {product.contact_form && (
+                    <p className="text-xs text-blue-600 font-bold mt-2">
+                      Formulário de Contato Ativo
+                    </p>
+                  )}
                 </div>
                 <div className="mt-4 pt-4 border-t flex justify-end gap-2">
                   <Link
