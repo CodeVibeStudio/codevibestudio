@@ -5,10 +5,12 @@ import { useEffect, useState, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { Pencil, Trash2, Layers, X } from "lucide-react";
+import { Pencil, Trash2, Layers, X, Tag } from "lucide-react";
 import Link from "next/link";
 
 // --- Tipos e Dados Iniciais ---
+type ProductStatus = "Em Produção" | "Em Desenvolvimento" | "Projeto Futuro";
+
 type Product = {
   id: number;
   name: string;
@@ -21,6 +23,7 @@ type Product = {
   slug: string | null;
   send_email: string | null;
   contact_form: boolean;
+  status: ProductStatus | null; // NOVA PROPRIEDADE
 };
 
 type Notification = {
@@ -39,9 +42,10 @@ const initialFormData: Omit<Product, "id"> = {
   slug: "",
   send_email: "",
   contact_form: false,
+  status: "Em Produção", // NOVO VALOR PADRÃO
 };
 
-// --- Componentes de UI Reutilizáveis (sem alterações) ---
+// --- Componentes de UI (sem alterações lógicas) ---
 
 const NotificationBanner = ({
   notification,
@@ -114,7 +118,6 @@ export default function AdminPage() {
   const supabase = createClient();
   const router = useRouter();
 
-  // Estados do componente
   const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [formData, setFormData] = useState<Omit<Product, "id"> | Product>(
@@ -164,7 +167,6 @@ export default function AdminPage() {
   ) => {
     const { name, value, type } = e.target;
     const isCheckbox = type === "checkbox";
-    // @ts-ignore
     setFormData((prev) => ({
       ...prev,
       [name]: isCheckbox ? (e.target as HTMLInputElement).checked : value,
@@ -256,7 +258,12 @@ export default function AdminPage() {
     }
 
     const { id, ...dataToSave } = formData as Product;
-    const productData = { ...dataToSave, logo_url: logoUrl };
+    // Garante que o status seja salvo corretamente
+    const productData = {
+      ...dataToSave,
+      logo_url: logoUrl,
+      status: formData.status,
+    };
 
     let error;
     if (editingProduct) {
@@ -304,6 +311,12 @@ export default function AdminPage() {
       </div>
     );
 
+  const statusStyles: { [key in ProductStatus]: string } = {
+    "Em Produção": "bg-green-100 text-green-800",
+    "Em Desenvolvimento": "bg-blue-100 text-blue-800",
+    "Projeto Futuro": "bg-purple-100 text-purple-800",
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
       {productToDelete && (
@@ -331,73 +344,97 @@ export default function AdminPage() {
         )}
         <form
           onSubmit={handleSubmit}
-          className="bg-white p-6 rounded-lg shadow-md mb-8 space-y-4"
+          className="bg-white p-6 rounded-lg shadow-md mb-8 grid grid-cols-1 md:grid-cols-2 gap-4"
         >
-          <h2 className="text-2xl font-semibold mb-4">
+          <h2 className="text-2xl font-semibold mb-2 md:col-span-2">
             {editingProduct ? "A Editar Produto" : "Adicionar Novo Produto"}
           </h2>
-          <input
-            name="name"
-            value={formData.name}
-            onChange={handleInputChange}
-            placeholder="Nome do Produto"
-            className="w-full p-2 border rounded"
-            required
-          />
-          <input
-            name="slug"
-            value={"slug" in formData ? (formData.slug ?? "") : ""}
-            onChange={handleInputChange}
-            placeholder="Slug para URL (ex: rescuenow)"
-            className="w-full p-2 border rounded"
-            required
-          />
-          <input
-            name="slogan"
-            value={formData.slogan}
-            onChange={handleInputChange}
-            placeholder="Slogan"
-            className="w-full p-2 border rounded"
-          />
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            placeholder="Descrição"
-            className="w-full p-2 border rounded"
-          />
-          <select
-            name="type"
-            value={formData.type}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-          >
-            <option value="saas">SaaS</option>
-            <option value="app">App</option>
-          </select>
-          <input
-            name="web_link"
-            value={"web_link" in formData ? (formData.web_link ?? "") : ""}
-            onChange={handleInputChange}
-            placeholder="Link da Web"
-            className="w-full p-2 border rounded"
-          />
-          <input
-            name="send_email"
-            value={"send_email" in formData ? (formData.send_email ?? "") : ""}
-            onChange={handleInputChange}
-            placeholder="E-mail para receber notificações"
-            className="w-full p-2 border rounded"
-          />
-          <input
-            name="app_link"
-            value={"app_link" in formData ? (formData.app_link ?? "") : ""}
-            onChange={handleInputChange}
-            placeholder="Link do App"
-            className="w-full p-2 border rounded"
-          />
 
-          <div className="border-t pt-4">
+          {/* Coluna 1 */}
+          <div className="space-y-4">
+            <input
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              placeholder="Nome do Produto"
+              className="w-full p-2 border rounded"
+              required
+            />
+            <input
+              name="slug"
+              value={"slug" in formData ? (formData.slug ?? "") : ""}
+              onChange={handleInputChange}
+              placeholder="Slug para URL (ex: rescuenow)"
+              className="w-full p-2 border rounded"
+              required
+            />
+            <input
+              name="slogan"
+              value={formData.slogan}
+              onChange={handleInputChange}
+              placeholder="Slogan"
+              className="w-full p-2 border rounded"
+            />
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              placeholder="Descrição"
+              className="w-full p-2 border rounded h-24"
+            />
+          </div>
+
+          {/* Coluna 2 */}
+          <div className="space-y-4">
+            <select
+              name="type"
+              value={formData.type}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded"
+            >
+              <option value="saas">SaaS</option>
+              <option value="app">App</option>
+            </select>
+
+            {/* NOVO CAMPO DE STATUS */}
+            <select
+              name="status"
+              value={formData.status ?? "Em Produção"}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded"
+            >
+              <option value="Em Produção">Em Produção</option>
+              <option value="Em Desenvolvimento">Em Desenvolvimento</option>
+              <option value="Projeto Futuro">Projeto Futuro</option>
+            </select>
+
+            <input
+              name="web_link"
+              value={"web_link" in formData ? (formData.web_link ?? "") : ""}
+              onChange={handleInputChange}
+              placeholder="Link da Web"
+              className="w-full p-2 border rounded"
+            />
+            <input
+              name="app_link"
+              value={"app_link" in formData ? (formData.app_link ?? "") : ""}
+              onChange={handleInputChange}
+              placeholder="Link do App"
+              className="w-full p-2 border rounded"
+            />
+            <input
+              name="send_email"
+              value={
+                "send_email" in formData ? (formData.send_email ?? "") : ""
+              }
+              onChange={handleInputChange}
+              placeholder="E-mail para receber notificações"
+              className="w-full p-2 border rounded"
+            />
+          </div>
+
+          {/* Seção de Opções (abaixo das colunas) */}
+          <div className="md:col-span-2 border-t pt-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -408,19 +445,17 @@ export default function AdminPage() {
                 onChange={handleInputChange}
                 className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              {/* **MUDANÇA:** Estilo do texto atualizado para corresponder ao page 1.tsx */}
               <span className="font-medium text-gray-700">
-                Habilitar formulário de orçamento para este produto
+                Habilitar formulário de orçamento
               </span>
             </label>
-            {/* **MUDANÇA:** Estilo do parágrafo atualizado para corresponder ao page 1.tsx */}
             <p className="text-xs text-gray-500 mt-1 ml-8">
               Marque esta opção se o produto não tiver planos e necessitar de um
-              contacto para orçamento (ex: Landing Pages).
+              contacto para orçamento.
             </p>
           </div>
 
-          <div>
+          <div className="md:col-span-2">
             <label className="block mb-2 text-sm font-medium">
               Logo do Produto (envie apenas se quiser alterar)
             </label>
@@ -431,7 +466,8 @@ export default function AdminPage() {
               accept="image/*"
             />
           </div>
-          <div className="flex gap-4">
+
+          <div className="md:col-span-2 flex gap-4">
             <button
               type="submit"
               disabled={isSubmitting}
@@ -454,6 +490,7 @@ export default function AdminPage() {
             )}
           </div>
         </form>
+
         <div>
           <h2 className="text-2xl font-semibold mb-4">Produtos Existentes</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -466,12 +503,22 @@ export default function AdminPage() {
                   <img
                     src={
                       product.logo_url ||
-                      "https://placehold.com/64x64/eee/ccc?text=Logo"
+                      "https://placehold.co/64x64/eee/ccc?text=Logo"
                     }
                     alt={product.name}
                     className="w-16 h-16 rounded-md mb-4 object-cover"
                   />
                   <h3 className="font-bold text-xl">{product.name}</h3>
+
+                  {/* EXIBIÇÃO DO STATUS NA LISTA */}
+                  {product.status && (
+                    <span
+                      className={`text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full inline-block my-2 ${statusStyles[product.status] || "bg-gray-100 text-gray-800"}`}
+                    >
+                      {product.status}
+                    </span>
+                  )}
+
                   <p className="text-sm text-gray-600">{product.description}</p>
                   {product.contact_form && (
                     <p className="text-xs text-blue-600 font-bold mt-2">

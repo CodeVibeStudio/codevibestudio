@@ -7,13 +7,17 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-// --- Tipos de Dados ---
+// --- Tipos de Dados Atualizados ---
+type ProductStatus = "Em Produção" | "Em Desenvolvimento" | "Projeto Futuro";
+
 type Product = {
   id: number;
   name: string;
   slogan: string;
   description: string;
   logo_url: string;
+  contact_form: boolean;
+  status: ProductStatus | null; // NOVA PROPRIEDADE
 };
 
 type Plan = {
@@ -24,7 +28,7 @@ type Plan = {
   is_featured: boolean;
 };
 
-// --- Função para gerar páginas estáticas ---
+// --- Função para gerar páginas estáticas (sem alteração) ---
 export async function generateStaticParams() {
   const { data: products } = await supabase
     .from("products")
@@ -34,7 +38,7 @@ export async function generateStaticParams() {
   return products.map((product) => ({ slug: product.slug }));
 }
 
-// --- Componente do Cartão de Plano ---
+// --- Componente do Cartão de Plano (sem alteração) ---
 function PlanCard({ plan, productSlug }: { plan: Plan; productSlug: string }) {
   const signupUrl = `/signup?plan=${plan.name.toLowerCase()}&product=${productSlug}`;
 
@@ -82,14 +86,15 @@ function PlanCard({ plan, productSlug }: { plan: Plan; productSlug: string }) {
   );
 }
 
-// --- Componente Principal da Página ---
-// CORREÇÃO: Refatorado para ser mais limpo e evitar o aviso do terminal.
+// --- Função para buscar dados do produto (atualizada) ---
 const getProductData = async (slug: string) => {
   const { data: product, error } = await supabase
     .from("products")
-    .select("id, name, slogan, description, logo_url, contact_form")
+    // ATUALIZADO: Adicionado 'status' à query
+    .select("id, name, slogan, description, logo_url, contact_form, status")
     .eq("slug", slug)
     .single();
+
   if (error || !product) notFound();
 
   const { data: plans } = await supabase
@@ -98,15 +103,25 @@ const getProductData = async (slug: string) => {
     .eq("product_id", product.id)
     .order("price", { ascending: true });
 
-  return { product, plans: plans || [] };
+  return { product: product as Product, plans: plans || [] };
 };
 
+// --- Componente Principal da Página (atualizado) ---
 export default async function ProductPage({
   params,
 }: {
   params: { slug: string };
 }) {
   const { product, plans } = await getProductData(params.slug);
+
+  // Mapeamento de status para estilos de CSS
+  const statusStyles: { [key in ProductStatus]: string } = {
+    "Em Produção": "bg-green-100 text-green-800 border border-green-200",
+    "Em Desenvolvimento": "bg-blue-100 text-blue-800 border border-blue-200",
+    "Projeto Futuro": "bg-purple-100 text-purple-800 border border-purple-200",
+  };
+
+  const badgeStyle = product.status ? statusStyles[product.status] : "";
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -115,7 +130,8 @@ export default async function ProductPage({
         <section className="text-center mb-16">
           <Image
             src={
-              product.logo_url || "https://placehold.co/64x64/eee/ccc?text=Logo"
+              product.logo_url ||
+              "https://placehold.co/100x100/eee/ccc?text=Logo"
             }
             alt={`Logo ${product.name}`}
             width={100}
@@ -125,13 +141,27 @@ export default async function ProductPage({
           <h1 className="text-5xl font-extrabold text-gray-900">
             {product.name}
           </h1>
-          <p className="text-xl text-gray-600 mt-2">{product.slogan}</p>
+
+          {/* NOVO: Badge de Status */}
+          {product.status && (
+            <div className="mt-4 flex justify-center">
+              <span
+                className={`text-sm font-bold px-4 py-1.5 rounded-full ${badgeStyle}`}
+              >
+                {product.status}
+              </span>
+            </div>
+          )}
+
+          <p className="text-xl text-gray-600 mt-4">{product.slogan}</p>
           <p className="max-w-3xl mx-auto text-lg text-gray-700 mt-4">
             {product.description}
           </p>
 
           {product.contact_form && (
-            <OrcamentoButton productName={product.name} />
+            <div className="mt-8">
+              <OrcamentoButton productName={product.name} />
+            </div>
           )}
         </section>
 
