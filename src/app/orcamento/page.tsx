@@ -1,153 +1,26 @@
 // src/app/orcamento/page.tsx
-"use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState, ChangeEvent, FormEvent } from "react";
+// **MUDANÇA:** A página agora é um componente "wrapper" que usa Suspense.
+// Todo o código que depende de hooks de cliente foi movido para um componente separado.
 
+import { Suspense } from "react";
+import OrcamentoForm from "@/components/OrcamentoForm"; // Vamos criar este componente
+
+// Este é o componente da página principal. Ele é muito simples.
 export default function OrcamentoPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  // Obtém o nome do produto a partir do URL
-  const produto = searchParams.get("produto") || "Serviço Personalizado";
-
-  const [formData, setFormData] = useState({
-    nome_completo: "",
-    whatsapp: "",
-    resumo_projeto: "",
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-
-  // ** CORREÇÃO: Adicionada a tipagem correta para o evento **
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  // ** CORREÇÃO: Adicionada a tipagem correta para o evento **
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSuccess(false);
-
-    const response = await fetch("/api/sendOrcamento", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...formData, produto_nome: produto }),
-    });
-
-    setLoading(false);
-
-    if (response.ok) {
-      setSuccess(true);
-      // Limpa o formulário e redireciona após um pequeno atraso
-      setTimeout(() => router.push("/"), 2000);
-    } else {
-      setError(
-        "Ocorreu um erro ao enviar o seu pedido. Por favor, tente novamente."
-      );
-    }
-  };
-
-  if (success) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
-        <div className="w-full max-w-md rounded-lg bg-white p-8 text-center shadow-md">
-          <h2 className="text-2xl font-semibold text-green-600">
-            Pedido Enviado!
-          </h2>
-          <p className="mt-4 text-gray-700">
-            O seu pedido de orçamento foi enviado com sucesso. Entraremos em
-            contacto em breve!
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
+    // O Suspense mostra um fallback (ex: texto de carregamento) enquanto o conteúdo
+    // do formulário (que depende do URL) não está pronto para ser renderizado.
     <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-md space-y-4 rounded-lg bg-white p-6 shadow-md"
+      <Suspense
+        fallback={
+          <div className="text-center font-semibold">
+            A carregar formulário...
+          </div>
+        }
       >
-        <h2 className="text-2xl font-semibold">
-          Pedido de Orçamento: {produto}
-        </h2>
-        <p className="text-sm text-gray-600">
-          Preencha os campos abaixo e a nossa equipa entrará em contacto.
-        </p>
-
-        <div>
-          <label
-            htmlFor="nome_completo"
-            className="mb-1 block text-sm font-medium text-gray-700"
-          >
-            Nome Completo
-          </label>
-          <input
-            id="nome_completo"
-            type="text"
-            name="nome_completo"
-            placeholder="Seu nome completo"
-            required
-            value={formData.nome_completo}
-            onChange={handleChange}
-            className="w-full rounded-md border p-2"
-          />
-        </div>
-
-        <div>
-          <label
-            htmlFor="whatsapp"
-            className="mb-1 block text-sm font-medium text-gray-700"
-          >
-            WhatsApp
-          </label>
-          <input
-            id="whatsapp"
-            type="text"
-            name="whatsapp"
-            placeholder="(XX) XXXXX-XXXX"
-            required
-            value={formData.whatsapp}
-            onChange={handleChange}
-            className="w-full rounded-md border p-2"
-          />
-        </div>
-
-        <div>
-          <label
-            htmlFor="resumo_projeto"
-            className="mb-1 block text-sm font-medium text-gray-700"
-          >
-            Breve resumo do projeto
-          </label>
-          <textarea
-            id="resumo_projeto"
-            name="resumo_projeto"
-            placeholder="Descreva o que precisa..."
-            required
-            value={formData.resumo_projeto}
-            onChange={handleChange}
-            rows={4}
-            className="w-full rounded-md border p-2"
-          />
-        </div>
-
-        {error && <p className="text-sm text-red-500">{error}</p>}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-md bg-green-600 p-2 text-white hover:bg-green-700 disabled:bg-gray-400"
-        >
-          {loading ? "A enviar..." : "Enviar Pedido"}
-        </button>
-      </form>
+        <OrcamentoForm />
+      </Suspense>
     </div>
   );
 }
