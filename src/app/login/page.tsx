@@ -3,17 +3,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-// ** MUDANÇA: Importa a função que cria o cliente **
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react"; // Ícones para o botão
 
 export default function LoginPage() {
   const router = useRouter();
-  // ** MUDANÇA: Cria o cliente dentro do componente **
   const supabase = createClient();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // NOVO: Estado para visibilidade da senha
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -55,14 +55,36 @@ export default function LoginPage() {
             required
             className="w-full rounded-lg border p-3"
           />
-          <input
-            type="password"
-            placeholder="Sua senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full rounded-lg border p-3"
-          />
+          {/* NOVO: Campo de senha com botão de visibilidade */}
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Sua senha"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full rounded-lg border p-3 pr-10" // Adiciona padding à direita para o ícone
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+              aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
+
+          {/* NOVO: Link para recuperação de senha */}
+          <div className="text-right text-sm">
+            <Link
+              href="/recuperar-senha"
+              className="font-medium text-blue-600 hover:underline"
+            >
+              Esqueceu a sua senha?
+            </Link>
+          </div>
+
           <button
             type="submit"
             disabled={loading}

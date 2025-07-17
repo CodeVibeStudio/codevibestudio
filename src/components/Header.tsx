@@ -1,22 +1,24 @@
 // src/components/Header.tsx
-"use client"; // Este componente precisa de interatividade
+"use client";
 
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
+import AnimatedBrandName from "./AnimatedBrandName"; // NOVO: Importa o componente
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navLinks = [
-    { href: "#projetos", label: "Projetos" },
-    { href: "#ideator", label: "Gerador de Ideias" },
-    { href: "#sobre", label: "Sobre Nós" },
+    { href: "/#projetos", label: "Projetos" },
+    { href: "/#ideator", label: "Gerador de Ideias" },
+    { href: "/#sobre", label: "Sobre Nós" },
   ];
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
-        <Link href="/">
+        {/* Logótipo e Nome da Empresa */}
+        <Link href="/" className="flex items-center space-x-3">
           <Image
             src="/codevibestudiologo.png"
             alt="Logo CodeVibe Studio"
@@ -24,6 +26,8 @@ export default function Header() {
             height={50}
             className="rounded-md"
           />
+          {/* ATUALIZADO: Substituído pelo componente animado */}
+          <AnimatedBrandName />
         </Link>
         <div className="hidden md:flex items-center space-x-6">
           {navLinks.map((link) => (
@@ -57,6 +61,7 @@ export default function Header() {
           </button>
         </div>
       </nav>
+      {/* Menu mobile (sem alterações) */}
       {isMenuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-white shadow-lg">
           <div className="flex flex-col items-center p-4 space-y-2">
