@@ -13,7 +13,7 @@ import AnimatedBrandName from "@/components/AnimatedBrandName";
 // Garante que a página seja sempre renderizada dinamicamente no servidor a cada requisição.
 export const dynamic = "force-dynamic";
 
-// --- Tipos de Dados ATUALIZADOS ---
+// --- Tipos de Dados ---
 type ProductStatus = "Em Produção" | "Em Desenvolvimento" | "Projeto Futuro";
 
 type Product = {
@@ -33,29 +33,32 @@ type Product = {
 
 function HeroSection() {
   return (
-    // ALTERAÇÃO FEITA AQUI: de bg-gray-900 para bg-blue-600
-    <section className="bg-blue-600 py-24 text-white">
+    // ALTERAÇÃO: Fundo gradiente e overflow-hidden para a animação funcionar bem
+    <section className="bg-gradient-to-r from-[#007BFF] to-[#FF6200] py-24 text-white overflow-hidden">
       <div className="container mx-auto px-6 text-center">
-        <h1 className="text-5xl md:text-6xl font-extrabold mb-4">
-          "Soluções Digitais que Pulsam Inovação! 🚀"
+        {/* ALTERAÇÃO: Classes de animação adicionadas */}
+        <h1 className="text-5xl md:text-6xl font-extrabold mb-4 animate-fade-in-up hero-title-animation">
+          Soluções Digitais que Pulsam Inovação! 🚀
         </h1>
-        <p className="text-xl text-gray-200 mb-8 max-w-3xl mx-auto">
+        <p className="text-xl text-gray-200 mb-8 max-w-3xl mx-auto animate-fade-in-up hero-subtitle-animation">
           De RJ a MG, transformamos suas ideias em apps, IA e sistemas com
           tecnologia de ponta, design vibrante e paixão por desafios. Vamos
           criar o futuro juntos? 💡✨
         </p>
-        <Link
-          href="#projetos"
-          className="bg-white text-blue-600 font-bold py-3 px-8 rounded-lg text-lg hover:bg-gray-200 transition-colors"
-        >
-          Explore Nossos Projetos
-        </Link>
+        <div className="animate-fade-in-up hero-button-animation">
+          <Link
+            href="#projetos"
+            className="bg-white text-blue-600 font-bold py-3 px-8 rounded-lg text-lg hover:bg-gray-200 transition-transform transform hover:scale-105"
+          >
+            Explore Nossos Projetos
+          </Link>
+        </div>
       </div>
     </section>
   );
 }
 
-// Componente ProjectCard ATUALIZADO com a nova lógica de botões
+// Componente ProjectCard (sem alterações)
 function ProjectCard({ project }: { project: Product }) {
   const isSaaS = project.type === "saas";
   const statusStyles: { [key in ProductStatus]: string } = {
@@ -64,9 +67,7 @@ function ProjectCard({ project }: { project: Product }) {
     "Projeto Futuro": "bg-purple-100 text-purple-800",
   };
 
-  // Lógica para determinar quais botões exibir
   const renderButtons = () => {
-    // REGRA 1: Se o produto NÃO está "Em Produção", mostra sempre "Saiba mais..."
     if (project.status !== "Em Produção") {
       return (
         <Link
@@ -77,13 +78,9 @@ function ProjectCard({ project }: { project: Product }) {
         </Link>
       );
     }
-
-    // REGRA 2: Se o produto ESTÁ "Em Produção"
     const hasPlans = isSaaS && project.slug;
     const hasAppLink = !!project.app_link;
     const hasWebLink = !!project.web_link;
-
-    // Se não tiver nenhuma ação disponível, mostra "Saiba mais..." como fallback.
     if (!hasPlans && !hasAppLink && !hasWebLink) {
       return (
         <Link
@@ -94,7 +91,6 @@ function ProjectCard({ project }: { project: Product }) {
         </Link>
       );
     }
-
     return (
       <>
         {hasPlans && (
@@ -272,9 +268,8 @@ function Footer() {
   );
 }
 
-// --- Página Principal (Lógica de busca e ordenação ATUALIZADA) ---
+// --- Página Principal ---
 export default async function HomePage() {
-  // 1. Buscar todos os produtos, incluindo o status
   const { data: products, error } = await supabase
     .from("products")
     .select("*, status");
@@ -300,7 +295,6 @@ export default async function HomePage() {
     );
   }
 
-  // 2. Ordenar a lista completa de produtos pela regra de status e depois por nome
   const statusOrder: ProductStatus[] = [
     "Em Produção",
     "Em Desenvolvimento",
@@ -324,7 +318,6 @@ export default async function HomePage() {
       })
     : [];
 
-  // 3. Filtrar a lista JÁ ORDENADA nas categorias SaaS e App
   const saasProjects = sortedProducts.filter((p) => p.type === "saas");
   const appProjects = sortedProducts.filter((p) => p.type === "app");
 

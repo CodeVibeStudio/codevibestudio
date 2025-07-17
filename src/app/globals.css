@@ -10,7 +10,7 @@
 */
 
 /*
-  NOVO: Estilos para o efeito de gradiente animado no nome da marca
+  Estilos para o efeito de gradiente animado no nome da marca
 */
 @keyframes background-pan {
   0% {
@@ -35,4 +35,46 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: background-pan 10s linear infinite;
+}
+
+/*
+  NOVO: Animação de fade-in e slide-up para a Hero Section
+*/
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Classes de animação com diferentes delays */
+.animate-fade-in-up {
+  /* Garante que a animação não comece até ser aplicada */
+  opacity: 0;
+  animation-fill-mode: forwards; /* Mantém o estado final da animação */
+}
+
+.hero-title-animation {
+  animation-name: fade-in-up;
+  animation-duration: 0.8s;
+  animation-delay: 0.2s; /* Delay para o título */
+  animation-timing-function: ease-out;
+}
+
+.hero-subtitle-animation {
+  animation-name: fade-in-up;
+  animation-duration: 0.8s;
+  animation-delay: 0.4s; /* Delay maior para o subtítulo */
+  animation-timing-function: ease-out;
+}
+
+.hero-button-animation {
+  animation-name: fade-in-up;
+  animation-duration: 0.8s;
+  animation-delay: 0.6s; /* Delay ainda maior para o botão */
+  animation-timing-function: ease-out;
 }
