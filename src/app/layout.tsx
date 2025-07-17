@@ -5,9 +5,24 @@ import "./globals.css";
 // Configuração da fonte Inter do Google Fonts
 const inter = Inter({ subsets: ["latin"] });
 
+// Metadados otimizados para SEO
 export const metadata: Metadata = {
-  title: "CodeVibe Studio - Soluções Digitais Inovadoras",
-  description: "Desenvolvemos sistemas e sites modernos para alavancar o seu negócio. Conheça o RescueNow, nosso sistema de gestão empresarial.",
+  title: {
+    template: "%s | CodeVibe Studio", // Adiciona "| CodeVibe Studio" ao título de cada página
+    default: "CodeVibe Studio - Soluções Digitais Inovadoras", // Título padrão para a home page
+  },
+  description:
+    "Transformamos ideias em realidade com SaaS, Apps e soluções digitais sob medida. Conheça nossos projetos e serviços de desenvolvimento.",
+  keywords: [
+    "SaaS",
+    "Desenvolvimento de Apps",
+    "Next.js",
+    "Supabase",
+    "Stripe",
+    "CodeVibe Studio",
+    "Software como Serviço",
+    "Aplicativos Mobile",
+  ],
 };
 
 export default function RootLayout({

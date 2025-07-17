@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Metadata } from "next";
 
 // --- Tipos de Dados Atualizados ---
 type ProductStatus = "Em Produção" | "Em Desenvolvimento" | "Projeto Futuro";
@@ -17,7 +18,9 @@ type Product = {
   description: string;
   logo_url: string;
   contact_form: boolean;
-  status: ProductStatus | null; // NOVA PROPRIEDADE
+  status: ProductStatus | null;
+  meta_title: string | null; // NOVO
+  meta_description: string | null; // NOVO
 };
 
 type Plan = {
@@ -27,6 +30,51 @@ type Plan = {
   features: string[];
   is_featured: boolean;
 };
+
+// ATUALIZADO: Função para gerar metadados dinâmicos para SEO
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const { slug } = params;
+
+  // Busca os dados do produto, incluindo os novos campos de SEO
+  const { data: product } = await supabase
+    .from("products")
+    .select("name, slogan, description, logo_url, meta_title, meta_description")
+    .eq("slug", slug)
+    .single();
+
+  if (!product) {
+    return {
+      title: "Produto Não Encontrado",
+    };
+  }
+
+  // Lógica de fallback: Usa os campos de SEO se existirem, senão, usa os dados padrão.
+  const pageTitle = product.meta_title || product.name;
+  const pageDescription =
+    product.meta_description ||
+    product.slogan ||
+    product.description.substring(0, 155);
+
+  return {
+    title: pageTitle,
+    description: pageDescription,
+    openGraph: {
+      title: pageTitle,
+      description: pageDescription,
+      images: [
+        {
+          url: product.logo_url || "/default-logo.png", // Adicione uma imagem padrão se não houver logo
+          width: 1200,
+          height: 630,
+        },
+      ],
+    },
+  };
+}
 
 // --- Função para gerar páginas estáticas (sem alteração) ---
 export async function generateStaticParams() {
@@ -65,12 +113,13 @@ function PlanCard({ plan, productSlug }: { plan: Plan; productSlug: string }) {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
+              {" "}
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
                 d="M5 13l4 4L19 7"
-              ></path>
+              ></path>{" "}
             </svg>
             {feature}
           </li>
@@ -86,12 +135,13 @@ function PlanCard({ plan, productSlug }: { plan: Plan; productSlug: string }) {
   );
 }
 
-// --- Função para buscar dados do produto (atualizada) ---
+// --- Função para buscar dados do produto (sem alteração) ---
 const getProductData = async (slug: string) => {
   const { data: product, error } = await supabase
     .from("products")
-    // ATUALIZADO: Adicionado 'status' à query
-    .select("id, name, slogan, description, logo_url, contact_form, status")
+    .select(
+      "id, name, slogan, description, logo_url, contact_form, status, meta_title, meta_description"
+    )
     .eq("slug", slug)
     .single();
 
@@ -106,7 +156,7 @@ const getProductData = async (slug: string) => {
   return { product: product as Product, plans: plans || [] };
 };
 
-// --- Componente Principal da Página (atualizado) ---
+// --- Componente Principal da Página (sem alteração) ---
 export default async function ProductPage({
   params,
 }: {
@@ -114,7 +164,6 @@ export default async function ProductPage({
 }) {
   const { product, plans } = await getProductData(params.slug);
 
-  // Mapeamento de status para estilos de CSS
   const statusStyles: { [key in ProductStatus]: string } = {
     "Em Produção": "bg-green-100 text-green-800 border border-green-200",
     "Em Desenvolvimento": "bg-blue-100 text-blue-800 border border-blue-200",
@@ -142,7 +191,6 @@ export default async function ProductPage({
             {product.name}
           </h1>
 
-          {/* NOVO: Badge de Status */}
           {product.status && (
             <div className="mt-4 flex justify-center">
               <span
