@@ -5,7 +5,7 @@ import { useEffect, useState, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { Pencil, Trash2, Layers, X, Tag } from "lucide-react";
+import { Pencil, Trash2, Layers, X } from "lucide-react";
 import Link from "next/link";
 
 // --- Tipos e Dados Iniciais ---
@@ -23,7 +23,7 @@ type Product = {
   slug: string | null;
   send_email: string | null;
   contact_form: boolean;
-  status: ProductStatus | null; // NOVA PROPRIEDADE
+  status: ProductStatus | null;
 };
 
 type Notification = {
@@ -42,11 +42,10 @@ const initialFormData: Omit<Product, "id"> = {
   slug: "",
   send_email: "",
   contact_form: false,
-  status: "Em Produção", // NOVO VALOR PADRÃO
+  status: "Em Produção",
 };
 
 // --- Componentes de UI (sem alterações lógicas) ---
-
 const NotificationBanner = ({
   notification,
   onDismiss,
@@ -58,7 +57,6 @@ const NotificationBanner = ({
     const timer = setTimeout(onDismiss, 5000);
     return () => clearTimeout(timer);
   }, [onDismiss]);
-
   const bgColor =
     notification.type === "success"
       ? "bg-green-100 border-green-500 text-green-700"
@@ -118,7 +116,6 @@ export default function AdminPage() {
   const supabase = createClient();
   const router = useRouter();
 
-  const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [formData, setFormData] = useState<Omit<Product, "id"> | Product>(
     initialFormData
@@ -130,8 +127,9 @@ export default function AdminPage() {
   const [notification, setNotification] = useState<Notification | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
+  // **MUDANÇA (de page 1.tsx):** Lógica de inicialização um pouco mais limpa.
   useEffect(() => {
-    const checkUser = async () => {
+    const checkUserAndFetchData = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -141,25 +139,46 @@ export default function AdminPage() {
       ) {
         router.push("/admin/login");
       } else {
-        setUser(session.user);
-        fetchProducts();
+        await fetchProducts();
         setLoading(false);
       }
     };
-    checkUser();
+    checkUserAndFetchData();
   }, [router, supabase]);
 
+  // **MUDANÇA (de page 1.tsx):** Função atualizada com a ordenação por status.
   const fetchProducts = async () => {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .order("name", { ascending: true });
-    if (data) setProducts(data as Product[]);
-    if (error)
+    const { data, error } = await supabase.from("products").select("*");
+
+    if (error) {
       setNotification({
         message: `Erro ao buscar produtos: ${error.message}`,
         type: "error",
       });
+      setProducts([]);
+      return;
+    }
+
+    if (data) {
+      const statusOrder: ProductStatus[] = [
+        "Em Produção",
+        "Em Desenvolvimento",
+        "Projeto Futuro",
+      ];
+      const sortedData = [...data].sort((a, b) => {
+        const statusA = a.status || "";
+        const statusB = b.status || "";
+        const indexA = statusOrder.indexOf(statusA as ProductStatus);
+        const indexB = statusOrder.indexOf(statusB as ProductStatus);
+
+        // Coloca produtos sem status no final
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+
+        return indexA - indexB;
+      });
+      setProducts(sortedData as Product[]);
+    }
   };
 
   const handleInputChange = (
@@ -213,7 +232,7 @@ export default function AdminPage() {
         message: "Produto apagado com sucesso!",
         type: "success",
       });
-      fetchProducts();
+      await fetchProducts();
     }
     setProductToDelete(null);
   };
@@ -239,7 +258,6 @@ export default function AdminPage() {
     if (logoFile) {
       const sanitizedName = sanitizeFilename(logoFile.name);
       const filePath = `public/${Date.now()}-${sanitizedName}`;
-
       const { error: uploadError } = await supabase.storage
         .from("product-logos")
         .upload(filePath, logoFile);
@@ -258,7 +276,6 @@ export default function AdminPage() {
     }
 
     const { id, ...dataToSave } = formData as Product;
-    // Garante que o status seja salvo corretamente
     const productData = {
       ...dataToSave,
       logo_url: logoUrl,
@@ -291,7 +308,7 @@ export default function AdminPage() {
         } com sucesso!`,
         type: "success",
       });
-      fetchProducts();
+      await fetchProducts();
       handleCancelEdit();
     }
 
@@ -350,7 +367,6 @@ export default function AdminPage() {
             {editingProduct ? "A Editar Produto" : "Adicionar Novo Produto"}
           </h2>
 
-          {/* Coluna 1 */}
           <div className="space-y-4">
             <input
               name="name"
@@ -384,7 +400,6 @@ export default function AdminPage() {
             />
           </div>
 
-          {/* Coluna 2 */}
           <div className="space-y-4">
             <select
               name="type"
@@ -395,8 +410,6 @@ export default function AdminPage() {
               <option value="saas">SaaS</option>
               <option value="app">App</option>
             </select>
-
-            {/* NOVO CAMPO DE STATUS */}
             <select
               name="status"
               value={formData.status ?? "Em Produção"}
@@ -407,7 +420,6 @@ export default function AdminPage() {
               <option value="Em Desenvolvimento">Em Desenvolvimento</option>
               <option value="Projeto Futuro">Projeto Futuro</option>
             </select>
-
             <input
               name="web_link"
               value={"web_link" in formData ? (formData.web_link ?? "") : ""}
@@ -433,7 +445,6 @@ export default function AdminPage() {
             />
           </div>
 
-          {/* Seção de Opções (abaixo das colunas) */}
           <div className="md:col-span-2 border-t pt-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
@@ -509,16 +520,16 @@ export default function AdminPage() {
                     className="w-16 h-16 rounded-md mb-4 object-cover"
                   />
                   <h3 className="font-bold text-xl">{product.name}</h3>
-
-                  {/* EXIBIÇÃO DO STATUS NA LISTA */}
                   {product.status && (
                     <span
-                      className={`text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full inline-block my-2 ${statusStyles[product.status] || "bg-gray-100 text-gray-800"}`}
+                      className={`text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full inline-block my-2 ${
+                        statusStyles[product.status] ||
+                        "bg-gray-100 text-gray-800"
+                      }`}
                     >
                       {product.status}
                     </span>
                   )}
-
                   <p className="text-sm text-gray-600">{product.description}</p>
                   {product.contact_form && (
                     <p className="text-xs text-blue-600 font-bold mt-2">

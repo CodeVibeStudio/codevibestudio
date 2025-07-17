@@ -7,12 +7,14 @@ import { supabase } from "@/lib/supabase";
 import Header from "@/components/Header";
 import { ProjectIdeator } from "@/components/ProjectIdeator";
 import { Mail, MessageCircle } from "lucide-react";
-import ClientImage from "@/components/ClientImage"; // A solução para o erro de hidratação.
+import ClientImage from "@/components/ClientImage";
 
 // Garante que a página seja sempre renderizada dinamicamente no servidor a cada requisição.
 export const dynamic = "force-dynamic";
 
-// --- Tipos de Dados ---
+// --- Tipos de Dados ATUALIZADOS ---
+type ProductStatus = "Em Produção" | "Em Desenvolvimento" | "Projeto Futuro";
+
 type Product = {
   id: number;
   name: string;
@@ -23,6 +25,7 @@ type Product = {
   web_link: string | null;
   app_link: string | null;
   slug: string | null;
+  status: ProductStatus | null; // ADICIONADO
 };
 
 // --- Componentes ---
@@ -49,31 +52,47 @@ function HeroSection() {
   );
 }
 
+// Componente ProjectCard ATUALIZADO para mostrar o status
 function ProjectCard({ project }: { project: Product }) {
   const isSaaS = project.type === "saas";
   const webLinkHref =
     isSaaS && project.slug ? `/produtos/${project.slug}` : project.web_link;
 
+  const statusStyles: { [key in ProductStatus]: string } = {
+    "Em Produção": "bg-green-100 text-green-800",
+    "Em Desenvolvimento": "bg-blue-100 text-blue-800",
+    "Projeto Futuro": "bg-purple-100 text-purple-800",
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 flex flex-col h-full">
       <div className="p-6 flex-grow">
-        <div className="flex justify-between items-start mb-4">
-          {/* Usamos o nosso novo Client Component para a imagem */}
+        <div className="flex items-start mb-4">
           <ClientImage
             src={project.logo_url}
             alt={`Logo ${project.name}`}
             width={60}
             height={60}
-            className="rounded-lg object-cover"
+            className="rounded-lg object-cover mr-4"
             fallbackText={project.name.charAt(0)}
           />
+          <div className="flex-1">
+            <h3 className="text-2xl font-bold text-gray-800">{project.name}</h3>
+            {/* BADGE DE STATUS ADICIONADO */}
+            {project.status && (
+              <span
+                className={`text-xs font-medium mt-1 px-2.5 py-0.5 rounded-full inline-block ${statusStyles[project.status] || "bg-gray-100 text-gray-800"}`}
+              >
+                {project.status}
+              </span>
+            )}
+          </div>
           <span
-            className={`px-3 py-1 text-xs font-bold text-white rounded-full ${isSaaS ? "bg-blue-600" : "bg-green-600"}`}
+            className={`px-3 py-1 text-xs font-bold text-white rounded-full self-start ${isSaaS ? "bg-blue-600" : "bg-green-600"}`}
           >
             {isSaaS ? "SaaS" : "App"}
           </span>
         </div>
-        <h3 className="text-2xl font-bold text-gray-800">{project.name}</h3>
         <p className="font-semibold text-blue-500 mb-3">{project.slogan}</p>
         <p className="text-gray-600 text-sm">{project.description}</p>
       </div>
@@ -134,9 +153,10 @@ const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    {" "}
+    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />{" "}
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />{" "}
+    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />{" "}
   </svg>
 );
 function Footer() {
@@ -165,9 +185,11 @@ function Footer() {
         />
         <p className="text-lg font-bold mb-4">CodeVibe Studio</p>
         <p className="text-gray-400 mb-6">
-          Transformando ideias em realidade digital.
+          {" "}
+          Transformando ideias em realidade digital.{" "}
         </p>
         <div className="flex justify-center space-x-6 mb-8">
+          {" "}
           {socialLinks.map((link) => (
             <a
               key={link.label}
@@ -177,29 +199,30 @@ function Footer() {
               aria-label={link.label}
               className="text-gray-400 hover:text-orange-500 transition-colors"
             >
-              <link.icon size={28} />
+              {" "}
+              <link.icon size={28} />{" "}
             </a>
-          ))}
+          ))}{" "}
         </div>
         <p className="text-gray-500 text-sm">
+          {" "}
           &copy; {new Date().getFullYear()} CodeVibe Studio. Todos os direitos
-          reservados.
+          reservados.{" "}
         </p>
       </div>
     </footer>
   );
 }
 
-// --- Página Principal ---
+// --- Página Principal (Lógica de busca e ordenação ATUALIZADA) ---
 export default async function HomePage() {
+  // 1. Buscar todos os produtos, incluindo o status
   const { data: products, error } = await supabase
     .from("products")
-    .select("*")
-    .order("name", { ascending: true });
+    .select("*, status"); // Garante que a coluna status seja selecionada
 
   if (error) {
     console.error("Erro ao buscar produtos:", error.message);
-    // Exibindo uma UI de erro no servidor, similar à de page 2
     return (
       <main className="bg-gray-100">
         <Header />
@@ -219,8 +242,36 @@ export default async function HomePage() {
     );
   }
 
-  const saasProjects = products?.filter((p) => p.type === "saas") || [];
-  const appProjects = products?.filter((p) => p.type === "app") || [];
+  // 2. Ordenar a lista completa de produtos pela regra de status e depois por nome
+  const statusOrder: ProductStatus[] = [
+    "Em Produção",
+    "Em Desenvolvimento",
+    "Projeto Futuro",
+  ];
+  const sortedProducts = products
+    ? [...products].sort((a, b) => {
+        const statusA = a.status || "";
+        const statusB = b.status || "";
+        const indexA = statusOrder.indexOf(statusA as ProductStatus);
+        const indexB = statusOrder.indexOf(statusB as ProductStatus);
+
+        // Coloca produtos com status inválido ou nulo no final
+        const effectiveIndexA = indexA === -1 ? Infinity : indexA;
+        const effectiveIndexB = indexB === -1 ? Infinity : indexB;
+
+        // Critério primário: ordenar por status
+        if (effectiveIndexA !== effectiveIndexB) {
+          return effectiveIndexA - effectiveIndexB;
+        }
+
+        // Critério secundário: ordenar por nome alfabeticamente
+        return a.name.localeCompare(b.name);
+      })
+    : [];
+
+  // 3. Filtrar a lista JÁ ORDENADA nas categorias SaaS e App
+  const saasProjects = sortedProducts.filter((p) => p.type === "saas");
+  const appProjects = sortedProducts.filter((p) => p.type === "app");
 
   return (
     <main className="bg-gray-100">
@@ -251,7 +302,7 @@ export default async function HomePage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {saasProjects.map((p) => (
-                      <ProjectCard key={p.id} project={p} />
+                      <ProjectCard key={p.id} project={p as Product} />
                     ))}
                   </div>
                 </div>
@@ -268,7 +319,7 @@ export default async function HomePage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {appProjects.map((p) => (
-                      <ProjectCard key={p.id} project={p} />
+                      <ProjectCard key={p.id} project={p as Product} />
                     ))}
                   </div>
                 </div>
