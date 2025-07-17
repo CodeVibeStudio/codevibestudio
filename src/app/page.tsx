@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import { ProjectIdeator } from "@/components/ProjectIdeator";
 import { Mail, MessageCircle } from "lucide-react";
 import ClientImage from "@/components/ClientImage";
+import AnimatedBrandName from "@/components/AnimatedBrandName";
 
 // Garante que a página seja sempre renderizada dinamicamente no servidor a cada requisição.
 export const dynamic = "force-dynamic";
@@ -25,7 +26,7 @@ type Product = {
   web_link: string | null;
   app_link: string | null;
   slug: string | null;
-  status: ProductStatus | null; // ADICIONADO
+  status: ProductStatus | null;
 };
 
 // --- Componentes ---
@@ -52,16 +53,78 @@ function HeroSection() {
   );
 }
 
-// Componente ProjectCard ATUALIZADO para mostrar o status
+// Componente ProjectCard ATUALIZADO com a nova lógica de botões
 function ProjectCard({ project }: { project: Product }) {
   const isSaaS = project.type === "saas";
-  const webLinkHref =
-    isSaaS && project.slug ? `/produtos/${project.slug}` : project.web_link;
-
   const statusStyles: { [key in ProductStatus]: string } = {
     "Em Produção": "bg-green-100 text-green-800",
     "Em Desenvolvimento": "bg-blue-100 text-blue-800",
     "Projeto Futuro": "bg-purple-100 text-purple-800",
+  };
+
+  // Lógica para determinar quais botões exibir
+  const renderButtons = () => {
+    // REGRA 1: Se o produto NÃO está "Em Produção", mostra sempre "Saiba mais..."
+    if (project.status !== "Em Produção") {
+      return (
+        <Link
+          href={project.slug ? `/produtos/${project.slug}` : "#"}
+          className="flex-1 text-center bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+        >
+          Saiba mais...
+        </Link>
+      );
+    }
+
+    // REGRA 2: Se o produto ESTÁ "Em Produção"
+    const hasPlans = isSaaS && project.slug;
+    const hasAppLink = !!project.app_link;
+    const hasWebLink = !!project.web_link;
+
+    // Se não tiver nenhuma ação disponível, mostra "Saiba mais..." como fallback.
+    if (!hasPlans && !hasAppLink && !hasWebLink) {
+      return (
+        <Link
+          href={project.slug ? `/produtos/${project.slug}` : "#"}
+          className="flex-1 text-center bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+        >
+          Saiba mais...
+        </Link>
+      );
+    }
+
+    return (
+      <>
+        {hasPlans && (
+          <Link
+            href={`/produtos/${project.slug}`}
+            className="flex-1 text-center bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+          >
+            Ver Planos
+          </Link>
+        )}
+        {hasWebLink && !hasPlans && (
+          <a
+            href={project.web_link!}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 text-center bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+          >
+            Acessar Web
+          </a>
+        )}
+        {hasAppLink && (
+          <a
+            href={project.app_link!}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 text-center bg-orange-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors"
+          >
+            Baixar App
+          </a>
+        )}
+      </>
+    );
   };
 
   return (
@@ -78,7 +141,6 @@ function ProjectCard({ project }: { project: Product }) {
           />
           <div className="flex-1">
             <h3 className="text-2xl font-bold text-gray-800">{project.name}</h3>
-            {/* BADGE DE STATUS ADICIONADO */}
             {project.status && (
               <span
                 className={`text-xs font-medium mt-1 px-2.5 py-0.5 rounded-full inline-block ${statusStyles[project.status] || "bg-gray-100 text-gray-800"}`}
@@ -97,27 +159,7 @@ function ProjectCard({ project }: { project: Product }) {
         <p className="text-gray-600 text-sm">{project.description}</p>
       </div>
       <div className="p-6 mt-auto bg-gray-50 border-t">
-        <div className="flex flex-col sm:flex-row gap-3">
-          {webLinkHref && (
-            <Link
-              href={webLinkHref}
-              target={webLinkHref.startsWith("http") ? "_blank" : "_self"}
-              className="flex-1 text-center bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
-            >
-              {isSaaS ? "Ver Planos" : "Acessar Web"}
-            </Link>
-          )}
-          {project.app_link && (
-            <a
-              href={project.app_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 text-center bg-orange-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors"
-            >
-              Baixar App
-            </a>
-          )}
-        </div>
+        <div className="flex flex-col sm:flex-row gap-3">{renderButtons()}</div>
       </div>
     </div>
   );
@@ -219,7 +261,7 @@ export default async function HomePage() {
   // 1. Buscar todos os produtos, incluindo o status
   const { data: products, error } = await supabase
     .from("products")
-    .select("*, status"); // Garante que a coluna status seja selecionada
+    .select("*, status");
 
   if (error) {
     console.error("Erro ao buscar produtos:", error.message);
@@ -255,16 +297,13 @@ export default async function HomePage() {
         const indexA = statusOrder.indexOf(statusA as ProductStatus);
         const indexB = statusOrder.indexOf(statusB as ProductStatus);
 
-        // Coloca produtos com status inválido ou nulo no final
         const effectiveIndexA = indexA === -1 ? Infinity : indexA;
         const effectiveIndexB = indexB === -1 ? Infinity : indexB;
 
-        // Critério primário: ordenar por status
         if (effectiveIndexA !== effectiveIndexB) {
           return effectiveIndexA - effectiveIndexB;
         }
 
-        // Critério secundário: ordenar por nome alfabeticamente
         return a.name.localeCompare(b.name);
       })
     : [];
