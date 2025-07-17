@@ -33,18 +33,20 @@ type Product = {
 
 function HeroSection() {
   return (
-    <section className="bg-gray-900 py-24 text-white">
+    // ALTERAÇÃO FEITA AQUI: de bg-gray-900 para bg-blue-600
+    <section className="bg-blue-600 py-24 text-white">
       <div className="container mx-auto px-6 text-center">
         <h1 className="text-5xl md:text-6xl font-extrabold mb-4">
-          Soluções Digitais Inovadoras
+          "Soluções Digitais que Pulsam Inovação! 🚀"
         </h1>
-        <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-          Transformamos ideias em realidade com tecnologia de ponta, design
-          centrado no usuário e uma paixão por resolver problemas.
+        <p className="text-xl text-gray-200 mb-8 max-w-3xl mx-auto">
+          De RJ a MG, transformamos suas ideias em apps, IA e sistemas com
+          tecnologia de ponta, design vibrante e paixão por desafios. Vamos
+          criar o futuro juntos? 💡✨
         </p>
         <Link
           href="#projetos"
-          className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-700 transition-colors"
+          className="bg-white text-blue-600 font-bold py-3 px-8 rounded-lg text-lg hover:bg-gray-200 transition-colors"
         >
           Explore Nossos Projetos
         </Link>
@@ -173,10 +175,24 @@ function AboutSection() {
           Sobre a CodeVibe Studio
         </h3>
         <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-          Somos um estúdio de desenvolvimento apaixonado por criar soluções que
-          fazem a diferença. Combinamos design moderno com engenharia de
-          software robusta para entregar produtos que não apenas funcionam, mas
-          que encantam os usuários.
+          Bem-vindo à CodeVibe Studio, onde a inovação pulsa e as ideias ganham
+          vida! Somos uma empresa de tecnologia apaixonada por criar aplicativos
+          personalizados, sistemas inovadores e soluções de inteligência
+          artificial (IA) que transformam negócios e inspiram o futuro. Fundada
+          por Fábio Boscarino, nossa jornada começou nas vibrantes ruas do Rio
+          de Janeiro e floresceu em Minas Gerais, trazendo uma energia única do
+          litoral ao interior. Com um toque criativo e uma abordagem moderna,
+          desenvolvemos soluções tecnológicas sob medida, desde apps intuitivos
+          até sistemas robustos e IA que otimizam processos. Nossa paleta
+          vibrante — combinando o dinamismo do Azul Elétrico e a energia da
+          Laranja Vibrante — reflete nossa essência: inovação com alma. Cada
+          projeto é um código vivo, pulsando com a vibe da tecnologia de ponta.
+          Por que escolher a CodeVibe Studio? Expertise Personalizada:
+          Aplicativos e sistemas desenhados para o seu sucesso. Inovação em IA:
+          Soluções inteligentes que antecipam o futuro. Compromisso Local:
+          Tecnologia com raízes brasileiras, do RJ a MG. Pronto para transformar
+          sua ideia em realidade? Entre em contato e vamos criar algo incrível
+          juntos! 🚀
         </p>
       </div>
     </section>
