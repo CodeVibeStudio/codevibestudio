@@ -1,25 +1,24 @@
 // src/app/api/register/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/utils/supabase/admin";
 import { stripe } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
-  // O 'plan' aqui é o nome do plano, ex: "starter" ou "gratuito"
   const { empresa, email, password, plan, productSlug } = await req.json();
 
   if (!empresa || !email || !password || !plan || !productSlug) {
     return NextResponse.json(
-      { message: "Dados incompletos. Todos os campos são obrigatórios." },
+      { message: "Dados incompletos." },
       { status: 400 }
     );
   }
 
-  const supabaseAdmin = getSupabaseAdmin();
   let userId: string | undefined;
+  let empresaId: string | undefined;
 
   try {
-    // 1. Encontrar o produto no Supabase
+    // 1. Encontrar o ID do produto
     const { data: productData, error: productError } = await supabaseAdmin
       .from("products")
       .select("id")
@@ -33,14 +32,14 @@ export async function POST(req: NextRequest) {
     }
     const productId = productData.id;
 
-    // 2. Criar o utilizador
+    // 2. Criar o utilizador no Supabase Auth
     const {
       data: { user },
       error: authError,
     } = await supabaseAdmin.auth.admin.createUser({
       email: email,
       password: password,
-      email_confirm: true,
+      email_confirm: true, // Auto-confirma o e-mail
     });
 
     if (authError) {
@@ -55,7 +54,7 @@ export async function POST(req: NextRequest) {
     if (!user) throw new Error("O utilizador não foi criado com sucesso.");
     userId = user.id;
 
-    // 3. Criar a empresa
+    // 3. Criar a empresa associada
     const { data: empresaData, error: empresaError } = await supabaseAdmin
       .from("empresas")
       .insert({ nome: empresa, owner_id: userId })
@@ -65,7 +64,7 @@ export async function POST(req: NextRequest) {
     if (empresaError || !empresaData) {
       throw new Error("Erro ao registar a empresa.");
     }
-    const empresaId = empresaData.id;
+    empresaId = empresaData.id;
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
     if (!siteUrl) {
@@ -74,55 +73,53 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ** CORREÇÃO 2: TRATAMENTO ESPECIAL PARA O PLANO GRATUITO **
+    // 4. Lidar com o plano selecionado
+
+    // Se for o plano gratuito, cria a subscrição e termina o fluxo.
     if (plan.toLowerCase() === "gratuito") {
       await supabaseAdmin.from("subscriptions").insert({
         empresa_id: empresaId,
-        plano: "Gratuito", // Guardamos o nome correto
+        plano: "Gratuito",
         status: "active",
         product_id: productId,
       });
-      // Redireciona diretamente para o dashboard
       return NextResponse.json({ redirectUrl: `${siteUrl}/dashboard` });
     }
 
     // --- Lógica para planos pagos ---
 
-    // ** CORREÇÃO 1: USAR .ilike() PARA IGNORAR MAIÚSCULAS/MINÚSCULAS **
+    // Encontra o stripe_price_id para o plano e produto corretos
     const { data: planData, error: planError } = await supabaseAdmin
       .from("plans")
       .select("stripe_price_id")
-      .ilike("name", plan) // .ilike() é case-insensitive
+      .ilike("name", plan) // .ilike() ignora maiúsculas/minúsculas
       .eq("product_id", productId)
       .single();
 
-    if (planError || !planData || !planData.stripe_price_id) {
-      console.error(
-        `Plano '${plan}' ou o seu 'stripe_price_id' não foi encontrado na base de dados para o produto ${productId}.`,
-        planError
-      );
+    if (planError || !planData?.stripe_price_id) {
       throw new Error(
-        "A configuração de pagamento para o plano selecionado está indisponível."
+        `Configuração de pagamento para o plano '${plan}' está indisponível.`
       );
     }
-
     const stripePriceId = planData.stripe_price_id;
 
+    // Cria o cliente no Stripe
     const customer = await stripe.customers.create({
       email,
       name: empresa,
       metadata: { empresaId: empresaId },
     });
 
+    // Cria a subscrição inicial como 'incomplete'
     await supabaseAdmin.from("subscriptions").insert({
       empresa_id: empresaId,
       plano: plan,
       status: "incomplete",
       stripe_customer_id: customer.id,
       product_id: productId,
-      stripe_price_id: stripePriceId,
     });
 
+    // Cria a sessão de checkout do Stripe
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
       payment_method_types: ["card"],
@@ -133,7 +130,7 @@ export async function POST(req: NextRequest) {
         metadata: { empresaId: empresaId },
       },
       client_reference_id: empresaId,
-      success_url: `${siteUrl}/dashboard`,
+      success_url: `${siteUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/`,
     });
 
@@ -143,14 +140,18 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ redirectUrl: session.url });
   } catch (error: any) {
-    console.error("Erro completo na API de registo:", error);
+    console.error("Erro completo na API de registo:", error.message);
+
+    // Lógica de limpeza em caso de falha
     if (userId) {
-      await supabaseAdmin.auth.admin
-        .deleteUser(userId)
-        .catch((err) =>
-          console.error("Falha ao apagar utilizador órfão:", err)
-        );
+      if (empresaId) {
+        await supabaseAdmin.from("empresas").delete().eq("id", empresaId);
+        console.log(`Empresa órfã [${empresaId}] apagada.`);
+      }
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+      console.log(`Utilizador órfão [${userId}] apagado.`);
     }
+
     return NextResponse.json(
       { message: error.message || "Erro interno do servidor." },
       { status: 500 }
