@@ -2,7 +2,7 @@
 
 export default function AnimatedBrandName() {
   return (
-    <span className="text-xl font-bold animated-gradient hidden sm:block">
+    <span className="text-xl font-bold animated-gradient sm:block">
       CodeVibe Studio
     </span>
   );
