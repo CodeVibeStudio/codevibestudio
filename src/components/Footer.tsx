@@ -43,15 +43,14 @@ export default function Footer() {
     <footer id="contato" className="bg-gray-800 text-white py-12">
       <div className="container mx-auto px-6 text-center">
         <Image
-          src="/codevibestudiologo.png"
+          src="/social-card.png"
           alt="Logo CodeVibe Studio"
-          width={70}
-          height={70}
+          width={100}
+          height={100}
           className="rounded-md mx-auto mb-4"
         />
-        <p className="text-lg font-bold mb-4">CodeVibe Studio</p>
         <p className="text-gray-400 mb-6">
-          Transformando ideias em realidade digital.
+          "Transformando ideias em realidade digital.""
         </p>
         <div className="flex justify-center space-x-6 mb-8">
           {socialLinks.map((link) => (
