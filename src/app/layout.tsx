@@ -5,14 +5,17 @@ import "./globals.css";
 // Configuração da fonte Inter do Google Fonts
 const inter = Inter({ subsets: ["latin"] });
 
-// Metadados otimizados para SEO
+// URL base do seu site (essencial para as meta tags)
+const siteUrl = "https://codevibestudio.vercel.app";
+
+// Metadados otimizados para SEO e redes sociais
 export const metadata: Metadata = {
   title: {
-    template: "%s | CodeVibe Studio", // Adiciona "| CodeVibe Studio" ao título de cada página
-    default: "CodeVibe Studio - Soluções Digitais Inovadoras", // Título padrão para a home page
+    template: "%s | CodeVibe Studio",
+    default: "CodeVibe - Soluções Digitais que Pulsam Inovação! 🚀",
   },
   description:
-    "Transformamos ideias em realidade com SaaS, Apps e soluções digitais sob medida. Conheça nossos projetos e serviços de desenvolvimento.",
+    "De RJ a MG, transformamos suas ideias em apps, IA e sistemas com tecnologia de ponta, design vibrante e paixão por desafios. Vamos criar o futuro juntos? 💡✨",
   keywords: [
     "SaaS",
     "Desenvolvimento de Apps",
@@ -23,6 +26,33 @@ export const metadata: Metadata = {
     "Software como Serviço",
     "Aplicativos Mobile",
   ],
+
+  // Metadados para Open Graph (LinkedIn, Facebook, WhatsApp)
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    url: siteUrl,
+    title: "CodeVibe - Soluções Digitais que Pulsam Inovação! 🚀",
+    description:
+      "De RJ a MG, transformamos suas ideias em apps, IA e sistemas com tecnologia de ponta.",
+    images: [
+      {
+        url: `${siteUrl}/social-card.png`, // Caminho para a sua imagem padrão
+        width: 1200,
+        height: 630,
+        alt: "CodeVibe Studio",
+      },
+    ],
+  },
+
+  // Metadados para Twitter Cards (X)
+  twitter: {
+    card: "summary_large_image",
+    title: "CodeVibe - Soluções Digitais que Pulsam Inovação! 🚀",
+    description:
+      "De RJ a MG, transformamos suas ideias em apps, IA e sistemas com tecnologia de ponta.",
+    images: [`${siteUrl}/social-card.png`], // Caminho para a sua imagem padrão
+  },
 };
 
 export default function RootLayout({
@@ -32,9 +62,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      {/* Aplica a fonte Inter e as cores de fundo e texto padrão
-        definidas no tailwind.config.js e globals.css
-      */}
       <body className={`${inter.className} bg-fundo text-texto antialiased`}>
         {children}
       </body>

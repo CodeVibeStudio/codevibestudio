@@ -8,7 +8,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Metadata } from "next";
 
-// --- Tipos de Dados Atualizados ---
+// --- Tipos de Dados ---
 type ProductStatus = "Em Produção" | "Em Desenvolvimento" | "Projeto Futuro";
 
 type Product = {
@@ -19,8 +19,8 @@ type Product = {
   logo_url: string;
   contact_form: boolean;
   status: ProductStatus | null;
-  meta_title: string | null; // NOVO
-  meta_description: string | null; // NOVO
+  meta_title: string | null;
+  meta_description: string | null;
 };
 
 type Plan = {
@@ -38,8 +38,8 @@ export async function generateMetadata({
   params: { slug: string };
 }): Promise<Metadata> {
   const { slug } = params;
+  const siteUrl = "https://codevibestudio.vercel.app";
 
-  // Busca os dados do produto, incluindo os novos campos de SEO
   const { data: product } = await supabase
     .from("products")
     .select("name, slogan, description, logo_url, meta_title, meta_description")
@@ -52,12 +52,12 @@ export async function generateMetadata({
     };
   }
 
-  // Lógica de fallback: Usa os campos de SEO se existirem, senão, usa os dados padrão.
   const pageTitle = product.meta_title || product.name;
   const pageDescription =
     product.meta_description ||
     product.slogan ||
     product.description.substring(0, 155);
+  const imageUrl = product.logo_url || `${siteUrl}/social-card.png`;
 
   return {
     title: pageTitle,
@@ -67,16 +67,24 @@ export async function generateMetadata({
       description: pageDescription,
       images: [
         {
-          url: product.logo_url || "/default-logo.png", // Adicione uma imagem padrão se não houver logo
+          url: imageUrl,
           width: 1200,
           height: 630,
+          alt: pageTitle,
         },
       ],
+    },
+    // CORREÇÃO: Adicionadas as tags específicas para o Twitter
+    twitter: {
+      card: "summary_large_image",
+      title: pageTitle,
+      description: pageDescription,
+      images: [imageUrl],
     },
   };
 }
 
-// --- Função para gerar páginas estáticas (sem alteração) ---
+// --- Função para gerar páginas estáticas ---
 export async function generateStaticParams() {
   const { data: products } = await supabase
     .from("products")
@@ -86,7 +94,7 @@ export async function generateStaticParams() {
   return products.map((product) => ({ slug: product.slug }));
 }
 
-// --- Componente do Cartão de Plano (sem alteração) ---
+// --- Componente do Cartão de Plano ---
 function PlanCard({ plan, productSlug }: { plan: Plan; productSlug: string }) {
   const signupUrl = `/signup?plan=${plan.name.toLowerCase()}&product=${productSlug}`;
 
@@ -113,13 +121,12 @@ function PlanCard({ plan, productSlug }: { plan: Plan; productSlug: string }) {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              {" "}
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
                 d="M5 13l4 4L19 7"
-              ></path>{" "}
+              ></path>
             </svg>
             {feature}
           </li>
@@ -135,7 +142,7 @@ function PlanCard({ plan, productSlug }: { plan: Plan; productSlug: string }) {
   );
 }
 
-// --- Função para buscar dados do produto (sem alteração) ---
+// --- Função para buscar dados do produto ---
 const getProductData = async (slug: string) => {
   const { data: product, error } = await supabase
     .from("products")
@@ -156,7 +163,7 @@ const getProductData = async (slug: string) => {
   return { product: product as Product, plans: plans || [] };
 };
 
-// --- Componente Principal da Página (sem alteração) ---
+// --- Componente Principal da Página ---
 export default async function ProductPage({
   params,
 }: {
