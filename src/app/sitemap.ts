@@ -3,38 +3,20 @@ import { MetadataRoute } from "next";
 import { supabase } from "@/lib/supabase";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteUrl = "https://codevibestudio.vercel.app"; // URL final do seu site
+  const siteUrl = "https://codevibestudio.vercel.app";
 
-  // 1. Adiciona as páginas estáticas do seu site
+  // 1. Adiciona APENAS as páginas estáticas reais
   const staticRoutes = [
     {
-      url: `${siteUrl}/`,
+      url: `${siteUrl}/`, // Apenas a página inicial
       lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 1,
     },
-    {
-      url: `${siteUrl}/#projetos`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${siteUrl}/#sobre`,
-      lastModified: new Date(),
-      changeFrequency: "yearly",
-      priority: 0.5,
-    },
-    {
-      url: `${siteUrl}/#contato`,
-      lastModified: new Date(),
-      changeFrequency: "yearly",
-      priority: 0.5,
-    },
+    // Remova as outras rotas com '#' daqui
   ];
 
-  // 2. Busca os produtos para criar as rotas dinâmicas
-  // Certifique-se de que a sua tabela 'products' tem uma coluna 'updated_at'
+  // 2. Busca os produtos para criar as rotas dinâmicas (código permanece o mesmo)
   const { data: products } = await supabase
     .from("products")
     .select("slug, updated_at");
