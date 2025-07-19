@@ -63,3 +63,16 @@
     #4f46e5
   );
 }
+/* src/app/globals.css */
+
+/* ... (seus outros estilos @tailwind) ... */
+
+/* ▼▼▼ CORREÇÃO PARA COR EM TEXTO COM NEGRITO ▼▼▼ */
+/*
+  Esta regra corrige o conflito entre a classe .prose e os estilos de cor do Tiptap.
+  Ela força o texto em negrito (<strong>) a herdar a cor do seu elemento pai.
+  Se o pai for um <span style="color: red;">, o negrito também ficará vermelho.
+*/
+.prose strong {
+  color: inherit;
+}
