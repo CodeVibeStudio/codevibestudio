@@ -7,14 +7,14 @@ module.exports = {
   ],
   theme: {
     extend: {
-      // Nova paleta de cores baseada no seu logo para consistência da marca
+      // Sua paleta de cores...
       colors: {
         primaria: {
-          DEFAULT: "#0D47A1", // Um azul mais profundo e sóbrio
+          DEFAULT: "#0D47A1",
           light: "#1E88E5",
         },
         secundaria: {
-          DEFAULT: "#F57C00", // O laranja vibrante do logo
+          DEFAULT: "#F57C00",
           light: "#FFB74D",
         },
         fundo: "#f8fafc",
@@ -28,5 +28,7 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  // ▼▼▼ CORREÇÃO APLICADA AQUI ▼▼▼
+  plugins: [require("@tailwindcss/typography")],
+  // ▲▲▲ FIM DA CORREÇÃO ▲▲▲
 };

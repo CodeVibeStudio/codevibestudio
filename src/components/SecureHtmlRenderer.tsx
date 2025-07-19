@@ -1,8 +1,8 @@
 // src/components/SecureHtmlRenderer.tsx
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import DOMPurify from "dompurify";
+import { useEffect, useState } from "react";
+import type DOMPurify from "dompurify";
 
 interface SecureHtmlRendererProps {
   content: string;
@@ -13,28 +13,30 @@ const SecureHtmlRenderer = ({
   content,
   className = "",
 }: SecureHtmlRendererProps) => {
-  // CORREÇÃO: Memoizando o conteúdo sanitizado para evitar re-processamento desnecessário.
-  const sanitizedContent = useMemo(() => {
-    if (typeof window === "undefined") {
-      // Retorna vazio no servidor para evitar erros com DOMPurify
-      return "";
+  const [sanitizedContent, setSanitizedContent] = useState("");
+
+  useEffect(() => {
+    if (content) {
+      const sanitize = async () => {
+        const DOMPurifyModule = (await import("dompurify")).default;
+
+        // ▼▼▼ CORREÇÃO APLICADA AQUI ▼▼▼
+        // Adicionamos 'style' à lista de atributos permitidos (ADD_ATTR).
+        // Isso fará com que o DOMPurify não remova mais os estilos de cor e realce.
+        const clean = DOMPurifyModule.sanitize(content, {
+          USE_PROFILES: { html: true },
+          ADD_ATTR: ["target", "style"],
+        });
+        // ▲▲▲ FIM DA CORREÇÃO ▲▲▲
+
+        setSanitizedContent(clean);
+      };
+      sanitize();
+    } else {
+      setSanitizedContent("");
     }
-    // Configuração robusta para permitir estilos inline de cor e background
-    // que o Tiptap gera, ao mesmo tempo que protege contra XSS.
-    return DOMPurify.sanitize(content, {
-      USE_PROFILES: { html: true },
-      ADD_ATTR: ["target"],
-      // Permite estilos inline, crucial para as cores funcionarem.
-      ALLOWED_STYLE_PROPS: ["color", "background-color", "text-align"],
-    });
   }, [content]);
 
-  if (!sanitizedContent) {
-    return null;
-  }
-
-  // ADIÇÃO: Usando a classe 'prose' para aplicar os estilos de tipografia do Tailwind.
-  // Isso resolve o problema de espaçamento de parágrafos e linhas.
   return (
     <div
       className={`prose prose-sm max-w-none ${className}`}

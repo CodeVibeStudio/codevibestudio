@@ -5,8 +5,8 @@ import { useEffect, useState, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { Pencil, Trash2, X } from "lucide-react";
-import SecureHtmlRenderer from "@/components/SecureHtmlRenderer";
 import RichTextEditor from "@/components/RichTextEditor";
+import dynamic from "next/dynamic";
 
 // --- Tipos e Dados Iniciais ---
 type ProductStatus = "Em Produção" | "Em Desenvolvimento" | "Projeto Futuro";
@@ -46,7 +46,22 @@ const initialFormData: Omit<Product, "id"> = {
   seo_description: "",
 };
 
-// --- Componentes de UI ---
+// --- CORREÇÃO DEFINITIVA: Importação dinâmica do renderizador de HTML ---
+// O SecureHtmlRenderer é carregado apenas no lado do cliente, o que resolve o erro de hidratação.
+// O SSR é desativado para este componente, e um estado de carregamento é exibido em seu lugar.
+const SecureHtmlRenderer = dynamic(
+  () => import("@/components/SecureHtmlRenderer"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="prose prose-sm max-w-none text-gray-500">
+        Carregando descrição...
+      </div>
+    ),
+  }
+);
+
+// --- Componentes de UI (mantidos como estão) ---
 const NotificationBanner = ({
   notification,
   onDismiss,
@@ -126,6 +141,8 @@ export default function AdminPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<Notification | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+
+  // O estado `isClient` foi removido, pois a importação dinâmica resolve o problema de forma mais eficaz.
 
   useEffect(() => {
     const checkUserAndFetchData = async () => {
@@ -273,12 +290,13 @@ export default function AdminPage() {
     setIsSubmitting(false);
   };
 
-  if (loading)
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         Carregando...
       </div>
     );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
@@ -312,7 +330,7 @@ export default function AdminPage() {
             {editingProduct ? "Editar Produto" : "Adicionar Novo Produto"}
           </h2>
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6 md:items-start">
               {/* Coluna da Esquerda */}
               <div className="space-y-6 flex flex-col">
                 <div>
@@ -630,6 +648,7 @@ export default function AdminPage() {
                         </h3>
                       </div>
                       <div className="prose prose-sm max-w-none text-gray-600">
+                        {/* O SecureHtmlRenderer agora é carregado dinamicamente */}
                         <SecureHtmlRenderer content={product.description} />
                       </div>
                     </div>
